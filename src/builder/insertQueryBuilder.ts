@@ -1,0 +1,86 @@
+import { client } from "../connection/connection";
+import { EntityMetadata, MapperValue } from "../metadata/metadata";
+import { toArray, toValueArray } from "../utility/array";
+import {
+  addSelectColumns,
+  returningColumnsToSQL,
+  SelectColumn,
+} from "../utility/select";
+import { Primitive } from "../utility/types";
+import { QueryBuilder } from "./queryBuilder";
+import { SelectQueryBuilder } from "./selectQueryBuilder";
+
+export class InsertQueryBuilder<T> extends QueryBuilder<T> {
+  private insertValues: Array<Partial<T>> = [];
+  private selectQueryBuilder!: SelectQueryBuilder<any>;
+  private returningColumns: SelectColumn[] = [];
+
+  constructor(alias: string, metadata: EntityMetadata<T>) {
+    super(alias, metadata);
+    this.alias = alias;
+  }
+
+  values(values: Partial<T> | Array<Partial<T>>) {
+    if (Array.isArray(values)) this.insertValues.push(...values);
+    else this.insertValues.push(values);
+    return this;
+  }
+
+  private toInsertRows(): string {
+    const rows = this.insertValues
+      .map((value) =>
+        Object.keys(this.metadata.mapper).map((key) => {
+          //@ts-ignore
+          if (value?.[key] as Primitive) {
+            this.parameterCount++;
+            //@ts-ignore
+            this.parameters.push(value?.[key]);
+            return `$${this.parameterCount}`;
+          } else return "DEFAULT";
+        })
+      )
+      //@ts-expect-error TODO fix all my typing issues
+      .map((row) => toValueArray(row))
+      .map((row) => toArray(row));
+
+    //@ts-ignore
+    return toArray(rows, (input: Primitive) => `(${input})`);
+  }
+
+  select<K>(qb: SelectQueryBuilder<K>) {
+    this.selectQueryBuilder = qb;
+    return this;
+  }
+
+  returning(...columns: (keyof T)[]) {
+    this.returningColumns = addSelectColumns(columns, this.metadata);
+    return this;
+  }
+
+  toSQL(): [string, Array<Primitive>] {
+    const schema = client.escapeIdentifier("farm");
+    const tableName = client.escapeIdentifier("houses");
+
+    const returning = returningColumnsToSQL(this.returningColumns);
+
+    if (this.selectQueryBuilder) {
+      const [selectSQL, parameters] = this.selectQueryBuilder.toSQL();
+      return [
+        `insert into ${schema}.${tableName} ${selectSQL} returning ${returning}`,
+        parameters,
+      ];
+    }
+
+    const values = toArray(
+      Object.values<MapperValue>(this.metadata.mapper).map(({ name }) => name),
+      (input: Primitive) => client.escapeLiteral(String(input))
+    );
+
+    const insertRows = this.toInsertRows();
+
+    return [
+      `insert into ${schema}.${tableName} values (${values}) values ${insertRows} returning ${returning}`,
+      this.parameters,
+    ];
+  }
+}
