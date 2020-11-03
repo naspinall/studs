@@ -5,7 +5,7 @@ export class OffsetQueryBuilder {
   private offset: number = 0;
   private parameterCount: number = 0;
 
-  configure(config: OperatorConfiguration<any>): OffsetQueryBuilder {
+  configure(config: OperatorConfiguration): OffsetQueryBuilder {
     this.parameterCount = config.count || 0;
     return this;
   }

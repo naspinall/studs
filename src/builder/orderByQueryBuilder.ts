@@ -10,7 +10,7 @@ export interface OrderBy {
 export class OrderByQueryBuilder<T> {
   private orderByStatements: string[] = [];
 
-  configure(config: OperatorConfiguration<T>): OrderByQueryBuilder<T> {
+  configure(config: OperatorConfiguration): OrderByQueryBuilder<T> {
     return this;
   }
 
@@ -22,7 +22,7 @@ export class OrderByQueryBuilder<T> {
   }
 
   toSQL(): [string, Array<Primitive>] {
-    // No where statements
+    // No order by statements
     if (this.orderByStatements.length === 0) {
       return ["", []];
     }

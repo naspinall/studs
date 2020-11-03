@@ -4,17 +4,9 @@ import { Operator } from "./Operator";
 export class IsNullOperator extends Operator<any> {
   parameterCount!: number;
 
-  setParamCount(count: number) {
-    this.parameterCount = count;
-  }
-
-  getParamCount() {
-    return this.parameterCount;
-  }
-
   toSQL(): [string, Array<Primitive>] {
     // Returning greater than SQL string
-    return [` ${this.column} IS NULL`, []];
+    return [`${this.alias}.${this.column} IS NULL`, []];
   }
 }
 

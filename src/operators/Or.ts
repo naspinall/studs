@@ -1,9 +1,11 @@
+import { ParameterManager } from "../common/ParameterManager";
 import { Primitive } from "../utility/types";
 import { Operator, SelectOperator } from "./Operator";
 
 export class OrOperator<T> extends Operator<T> {
   private operators: Array<SelectOperator<T>>;
   private sqlString: string = "";
+
   constructor(operators: Array<SelectOperator<T>>) {
     super();
     this.operators = operators;
@@ -12,23 +14,25 @@ export class OrOperator<T> extends Operator<T> {
   toSQL(): [string, Array<Primitive>] {
     const parameters: Array<Primitive> = [];
 
-    this.operators.forEach((operator) => {
+    this.operators.forEach((operator, index) => {
+
       // Building SQL for all operators
-      const [sqlString, values] = operator
+      const [sqlString] = operator
         .configure({
-          count: this.parameterCount,
-          alias: this.column,
+          count: this.parameterManager.getParameterCount(),
+          alias: this.alias,
+          column: this.column,
+          metadata : this.metadata
         })
         .toSQL();
 
-      // Incrementing parameter count
-      this.parameterCount = operator.getParamCount();
+      this.parameterManager.merge(operator.getParameterManager());
 
-      if (parameters.length === 0) this.sqlString += `${sqlString}`;
+      if (index === 0) this.sqlString += sqlString;
       else this.sqlString += ` OR ${sqlString}`;
 
       // Adding values
-      parameters.push(...values);
+      parameters.push(...operator.getParameterManager().getParameters());
     });
 
     // Returning greater than SQL string

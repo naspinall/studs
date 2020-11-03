@@ -1,3 +1,4 @@
+import { ParameterManager } from "../common/ParameterManager";
 import { EntityMetadata } from "../metadata/metadata";
 import { Equal } from "../operators/Equal";
 import { NamedParameter, ParameterObject } from "../operators/NamedParameters";
@@ -14,7 +15,9 @@ export class WhereQueryBuilder<T> {
   private parameters: Primitive[] = [];
   private parameterCount = 0;
   private alias!: string;
-  private metadata!: EntityMetadata<T>;
+  private metadata!: EntityMetadata;
+
+  private parameterManager = new ParameterManager();
 
   protected buildWhere(): string {
     // No where statements
@@ -25,10 +28,10 @@ export class WhereQueryBuilder<T> {
     return `where${joinWhere(this.whereStatements)}`;
   }
 
-  configure(config: OperatorConfiguration<T>): WhereQueryBuilder<T> {
+  configure(config: OperatorConfiguration): WhereQueryBuilder<T> {
     this.parameterCount = config.count || 0;
     this.alias = config.alias || "";
-    this.metadata = config.metadata || ({} as EntityMetadata<T>);
+    this.metadata = config.metadata || ({} as EntityMetadata);
     return this;
   }
 
@@ -36,6 +39,9 @@ export class WhereQueryBuilder<T> {
     const whereKeys = Object.keys(values);
 
     for (const whereKey of whereKeys) {
+
+      console.log(whereKey)
+
       //@ts-ignore
       const databaseColumn = this.metadata.mapper[whereKey]?.name;
 
@@ -57,38 +63,32 @@ export class WhereQueryBuilder<T> {
   andWhere(SQLString: string, parameterObject: ParameterObject) {
     // And where are named parameters, allowing for any query to be written safely
     const namedParameter = new NamedParameter(SQLString, parameterObject);
-    const [query, parameters] = namedParameter
+    const [query] = namedParameter
       .configure({
         count: this.parameterCount,
       })
       .toSQL();
 
     this.whereStatements.push(query);
-
-    this.parameterCount += namedParameter.getParamCount();
-
-    this.parameters.push(...parameters);
+    this.parameterManager.merge(namedParameter.getParameterManager());
   }
 
   private addOperator(column: string, operator: SelectOperator<T>) {
+    
     // Getting SQL
     const [query, value] = operator
       .configure({
-        count: this.parameterCount,
-        alias: `${this.alias}.${column}`,
+        metadata: this.metadata,
+        count: this.parameterManager.getParameterCount(),
+        alias: this.alias,
+        column,
       })
       .toSQL();
 
     // Adding where statement
     this.whereStatements.push(query);
 
-    // Incrementing parameter count
-    this.parameterCount += operator.getParamCount();
-
-    // Adding value to list of parameters
-    Array.isArray(value)
-      ? this.parameters.push(...value)
-      : this.parameters.push(value);
+    this.parameterManager.merge(operator.getParameterManager());
   }
 
   toSQL(): [SQLString: string, parameters: Array<Primitive>] {
@@ -97,6 +97,6 @@ export class WhereQueryBuilder<T> {
       return ["", []];
     }
 
-    return [`where ${joinWhere(this.whereStatements)}`, this.parameters];
+    return [`where ${joinWhere(this.whereStatements)}`, this.parameterManager.getParameters()];
   }
 }

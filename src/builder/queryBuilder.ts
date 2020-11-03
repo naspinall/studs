@@ -6,11 +6,11 @@ import { Primitive } from "../utility/types";
 
 export interface QueryFactory<T> {
   toSQL(): [string, Array<Primitive>];
-  configure(config: OperatorConfiguration<T>): QueryFactory<T>;
+  configure(config: OperatorConfiguration): QueryFactory<T>;
 }
 
 export class QueryBuilder<T> {
-  protected metadata: EntityMetadata<T>;
+  protected metadata: EntityMetadata;
   
   protected client!: Client;
   protected alias!: string;
@@ -19,7 +19,7 @@ export class QueryBuilder<T> {
   protected parameters: Primitive[] = [];
   protected parameterCount = 0;
 
-  constructor(alias: string, metadata: EntityMetadata<T>) {
+  constructor(alias: string, metadata: EntityMetadata) {
     this.alias = alias;
     this.metadata = metadata;
   }

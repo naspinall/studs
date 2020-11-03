@@ -22,7 +22,7 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
   private offsetBuilder = new OffsetQueryBuilder();
   private orderByBuilder = new OrderByQueryBuilder<T>();
 
-  constructor(alias: string, metadata: EntityMetadata<T>) {
+  constructor(alias: string, metadata: EntityMetadata) {
     super(alias, metadata);
     this.alias = alias;
   }
@@ -45,7 +45,6 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
   }
 
   where(values: Partial<T>): SelectQueryBuilder<T> {
-    console.log(this);
     this.whereBuilder
       .configure({
         alias: this.alias,
@@ -108,7 +107,7 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
       schema,
       tableName,
       this.alias,
-      ...Object.keys(this.metadata.mapper)
+      ...this.metadata.listPropertyColumns()
     );
 
     return [SQLString, this.parameters];

@@ -15,7 +15,7 @@ export class InsertQueryBuilder<T> extends QueryBuilder<T> {
   private selectQueryBuilder!: SelectQueryBuilder<any>;
   private returningColumns: SelectColumn[] = [];
 
-  constructor(alias: string, metadata: EntityMetadata<T>) {
+  constructor(alias: string, metadata: EntityMetadata) {
     super(alias, metadata);
     this.alias = alias;
   }
@@ -29,7 +29,7 @@ export class InsertQueryBuilder<T> extends QueryBuilder<T> {
   private toInsertRows(): string {
     const rows = this.insertValues
       .map((value) =>
-        Object.keys(this.metadata.mapper).map((key) => {
+        this.metadata.listPropertyColumns().map((key) => {
           //@ts-ignore
           if (value?.[key] as Primitive) {
             this.parameterCount++;
@@ -38,10 +38,7 @@ export class InsertQueryBuilder<T> extends QueryBuilder<T> {
             return `$${this.parameterCount}`;
           } else return "DEFAULT";
         })
-      )
-      //@ts-expect-error TODO fix all my typing issues
-      .map((row) => toValueArray(row))
-      .map((row) => toArray(row));
+      ).map((row) => toArray(row));
 
     //@ts-ignore
     return toArray(rows, (input: Primitive) => `(${input})`);
@@ -72,7 +69,7 @@ export class InsertQueryBuilder<T> extends QueryBuilder<T> {
     }
 
     const values = toArray(
-      Object.values<MapperValue>(this.metadata.mapper).map(({ name }) => name),
+      this.metadata.listDatabaseColumns(),
       (input: Primitive) => client.escapeLiteral(String(input))
     );
 

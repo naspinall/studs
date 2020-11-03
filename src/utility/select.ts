@@ -8,16 +8,16 @@ export interface SelectColumn {
 }
 export const addSelectColumns = <T>(
   columns: (keyof T)[],
-  metadata: EntityMetadata<T>
+  metadata: EntityMetadata
 ) =>
   columns.map((column) => ({
-    databaseName: metadata.mapper[column].name,
+    databaseName: metadata.mapColumn(column as string),
     name: column as string,
   }));
 
 export const selectColumnsToSQL = (alias: string, columns: SelectColumn[]) => {
   const selectFormatter = (input: SelectColumn) =>
-    `${alias}.${input.databaseName} as ${escapeIdentifier(input.name)}`;
+    `${alias}.${input.databaseName} as ${input.name}`;
   return columns.length === 0 ? "*" : toArray(columns, selectFormatter);
 };
 
@@ -26,3 +26,6 @@ export const returningColumnsToSQL = (columns: SelectColumn[]) => {
     `${input.databaseName} as ${escapeIdentifier(input.name)}`;
   return columns.length === 0 ? "*" : toArray(columns, selectFormatter);
 };
+
+export const escapeAliasAndColumn = (alias: string, column: string) =>
+  `${escapeIdentifier(alias)}.${escapeIdentifier(column)}`;

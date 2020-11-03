@@ -10,12 +10,19 @@ export class LessThanOrEqualOperator extends Operator<any> {
   }
 
   toSQL(): [string, Array<Primitive>] {
-    // Increment parameter count by 1
-    this.parameterCount += 1;
+    // Converting SQL Value
+    this.parameters = this.getSQLValue(this.parameters);
+
+    // Getting parameterized value
+    const parameterized = this.parameterManager.addValue(this.parameters);
+
     // Returning greater than SQL string
-    return [` ${this.column} <= $${this.parameterCount}`, [this.parameters]];
+    return [
+      `${this.alias}.${this.column} <= ${parameterized}`,
+      [this.parameters],
+    ];
   }
 }
 
-export const LessOrEqualThan = (parameters: Primitive) =>
+export const LessThanOrEqual = (parameters: Primitive) =>
   new LessThanOrEqualOperator(parameters);

@@ -16,4 +16,9 @@ export class Ducks extends BaseEntity {
     name: "name",
   })
   name!: string;
+
+  @Column("text", {
+    name: "sid",
+  })
+  sid!: string;
 }

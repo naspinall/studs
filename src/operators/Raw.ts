@@ -3,44 +3,45 @@ import { Primitive } from "../utility/types";
 import { OperatorConfiguration, SelectOperator } from "./Operator";
 
 export class RawOperator implements SelectOperator<any> {
-  private parameterObject?: ParameterObject;
   private SQLStringFunction: (alias: string) => string;
-  private parameterCount: number = 0;
+
   private column!: string;
+  private alias!: string;
+
+  private parameterObject: ParameterObject;
+  private namedParameter: NamedParameter = new NamedParameter();
 
   constructor(
-    SQLString: (alias: string) => string,
-    parameters?: ParameterObject
+    SQLStringFunction: (alias: string) => string,
+    parameterObject?: ParameterObject
   ) {
-    this.SQLStringFunction = SQLString;
-    this.parameterObject = parameters || {};
+    this.SQLStringFunction = SQLStringFunction;
+    this.parameterObject = parameterObject || {};
   }
 
-  configure(config: OperatorConfiguration<any>): RawOperator {
-    this.parameterCount = config.count || 0;
+  configure(config: OperatorConfiguration): RawOperator {
+    this.alias = config.alias || "";
+    this.column = config.column || "";
+    this.namedParameter.configure({ count: config.count });
     return this;
   }
 
-  getParamCount(): number {
-    return this.parameterCount;
+  getParameterManager() {
+    return this.namedParameter.getParameterManager();
   }
 
   toSQL(): [string, Array<Primitive>] {
-    // Creating the SQL String
-    const aliasString = this.SQLStringFunction(this.column);
-    const factory = new NamedParameter(
-      aliasString,
-      this.parameterObject || {}
-    ).configure({
-      alias: `${this.column}`,
-      count: this.parameterCount,
+    // Build Raw Named Parameter SQL String
+    const rawSQL = this.SQLStringFunction(`${this.alias}.${this.column}`);
+
+    // Setting Named Parameter SQL String
+    this.namedParameter.configure({
+      SQLString: rawSQL,
+      parameterObject: this.parameterObject,
     });
 
-    const [SQLString, parameters] = factory.toSQL();
-
-    // To ensure the parameter count is consistent
-    this.parameterCount += parameters.length;
-    return [SQLString, parameters];
+    // Building SQL
+    return this.namedParameter.toSQL();
   }
 }
 

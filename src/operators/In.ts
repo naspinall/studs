@@ -1,4 +1,3 @@
-import { toParameterList } from "../utility/array";
 import { Primitive } from "../utility/types";
 import {
   isSelectOperator,
@@ -26,16 +25,14 @@ export class InOperator extends Operator<any> {
       return [`${this.column} IN (${SQLString})`, parameters];
     }
 
-    // Build parameter list
-    const parameters = toParameterList(
-      this.parameterCount,
-      this.parameters.length
-    );
+    // Converting types
+    this.parameters = this.getSQLValue(this.parameters);
 
-    // Increment parameter count by parameter length
-    this.parameterCount += this.parameters.length;
+    // Getting the parameter list
+    const parameterList = this.parameterManager.addList(this.parameters);
+
     // Returning greater than SQL string
-    return [`${this.column} IN (${parameters})`, this.parameters];
+    return [`${this.alias}.${this.column} IN (${parameterList})`, this.parameters];
   }
 }
 

@@ -1,53 +1,62 @@
 import { OperatorConfiguration, SelectOperator } from "./Operator";
 import { toParameterList } from "../utility/array";
 import { Primitive } from "../utility/types";
+import { ParameterManager } from "../common/ParameterManager";
 
 export interface ParameterObject {
   [index: string]: Primitive | Array<Primitive>;
 }
 
+interface NamedParameterConfiguration extends OperatorConfiguration {
+  SQLString?: string;
+  parameterObject?: ParameterObject;
+}
+
 export class NamedParameter implements SelectOperator<any> {
   private SQLString: string;
-  private parameterCount: number = 0;
   private parameterObject: ParameterObject;
-  private parameters: Array<Primitive> = [];
+  private parameterManager = new ParameterManager();
 
-  constructor(SQLString: string, parameterObject: ParameterObject) {
-    this.SQLString = SQLString;
-    this.parameterObject = parameterObject;
+  constructor(SQLString?: string, parameterObject?: ParameterObject) {
+    this.SQLString = SQLString || "";
+    this.parameterObject = parameterObject || {};
   }
 
-  configure(config: OperatorConfiguration<any>): NamedParameter {
-    this.parameterCount = config.count || 0;
+  configure({
+    count,
+    SQLString,
+    parameterObject,
+  }: NamedParameterConfiguration): NamedParameter {
+    this.parameterManager.configure({ count });
+    this.SQLString = SQLString || this.SQLString;
+    this.parameterObject = parameterObject || this.parameterObject;
     return this;
   }
 
-  getParamCount(): number {
-    return this.parameterCount;
+  getParameterManager(): ParameterManager {
+    return this.parameterManager;
   }
 
-  parseParameter(name: string) {
+  parseParameter(name: string, value: Primitive | Array<Primitive>) {
     // Creating regexp
     const regexp = new RegExp(`:${name}`);
 
-    // Incrementing parameter count
-    this.parameterCount++;
+    // Checking is in string
+    if (this.SQLString.match(regexp) === null) return;
 
-    // Replacing value with paramter
-    this.SQLString = this.SQLString.replace(regexp, `$${this.parameterCount}`);
+    const array = this.parameterManager.addValue(value);
+    this.SQLString = this.SQLString.replace(regexp, `${array}`);
   }
 
-  parseParameterList(name: string, length: number) {
+  parseParameterList(name: string, value: Array<Primitive>) {
+    // Creating regexp
     const regexp = new RegExp(`:...${name}`);
 
-    // Build parameter list
-    const parametersList = toParameterList(this.parameterCount, length);
+    // Checking is in string
+    if (this.SQLString.match(regexp) === null) return;
 
-    // Incrementing parameter count
-    this.parameterCount += length;
-
-    // Replacing value with paramter
-    this.SQLString = this.SQLString.replace(regexp, `${parametersList}`);
+    const list = this.parameterManager.addList(value);
+    this.SQLString = this.SQLString.replace(regexp, `${list}`);
   }
 
   // :value => a single parameter
@@ -56,24 +65,18 @@ export class NamedParameter implements SelectOperator<any> {
     // Getting all names
     const names = Object.keys(this.parameterObject || {});
 
-    // Iterating all names and paramatersing
+    // Iterating all names and paramaterzing
     names.forEach((name) => {
       //@ts-ignore
       const namedParameter = this.parameterObject[name];
-      if (Array.isArray(namedParameter)) {
-        // Substitute named parameters
-        this.parseParameterList(name, namedParameter.length);
-        // Push parameters
-        this.parameters.push(...namedParameter);
-      } else {
-        // Substitute named parameters
-        this.parseParameter(name);
-        // Push parameters
-        this.parameters.push(namedParameter);
-      }
+
+      this.parseParameter(name, namedParameter);
+
+      if (Array.isArray(namedParameter))
+        this.parseParameterList(name, namedParameter);
     });
 
     // Returning greater than SQL string
-    return [this.SQLString, this.parameters];
+    return [this.SQLString, this.parameterManager.getParameters()];
   }
 }

@@ -5,7 +5,7 @@ export class LimitQueryBuilder {
   private limit: number = 0;
   private parameterCount: number = 0;
 
-  configure(config: OperatorConfiguration<any>): LimitQueryBuilder {
+  configure(config: OperatorConfiguration): LimitQueryBuilder {
     this.parameterCount = config.count || 0;
     return this;
   }

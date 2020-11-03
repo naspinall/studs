@@ -1,22 +1,28 @@
-// import { Primitive } from "../utility/types";
-// import { Operator } from "./Operator";
+import { Primitive } from "../utility/types";
+import { Operator } from "./Operator";
 
-// export class BetweenOperator<T> extends Operator<T> {
-//   private parameters: Array<Primitive>;
-//   constructor(parameters: Array<Primitive>) {
-//     super();
-//     this.parameters = parameters;
-//   }
+export class BetweenOperator<T> extends Operator<T> {
+  private parameters: Array<Primitive>;
+  constructor(parameters: Array<Primitive>) {
+    super();
+    this.parameters = parameters;
+  }
 
-//   toSQL(): [string, Array<Primitive>] {
-//     this.parameterCount += 2;
-//     // Returning greater than SQL string
-//     return [
-//       `BETWEEN $${this.parameterCount - 2} AND ${this.parameterCount - 1}`,
-//       this.parameters,
-//     ];
-//   }
-// }
+  toSQL(): [string, Array<Primitive>] {
+    // Converting SQL Value
+    this.parameters = this.getSQLValue(this.parameters);
 
-// export const Between = (lower: PartialEntity<T>, upper: PartialEntity<T>) =>
-//   new BetweenOperator([lower, upper]);
+    // Getting parameterized value
+    const lower = this.parameterManager.addValue(this.parameters[0]);
+    const upper = this.parameterManager.addValue(this.parameters[1]);
+
+    // Returning greater than SQL string
+    return [
+      `${this.alias}.${this.column} BETWEEN ${lower} AND ${upper}`,
+      [lower, upper],
+    ];
+  }
+}
+
+export const Between = (lower: Primitive, upper: Primitive) =>
+  new BetweenOperator([lower, upper]);

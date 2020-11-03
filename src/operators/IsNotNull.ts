@@ -6,7 +6,7 @@ export class IsNotNullOperator extends Operator<any> {
 
   toSQL(): [string, Array<Primitive>] {
     // Returning greater than SQL string
-    return [`${this.column} IS NOT NULL`, []];
+    return [`${this.alias}.${this.column} IS NOT NULL`, []];
   }
 }
 

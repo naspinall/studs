@@ -1,7 +1,7 @@
 import { Primitive } from "./types";
 
 export const toLowercase = (value: string) => {
-  return value.charAt(0).toUpperCase() + value.slice(1);
+  return value.charAt(0).toLowerCase() + value.slice(1);
 };
 
 const defaultFormatter = (input: Primitive) => String(input);
@@ -18,16 +18,8 @@ export const toParameterList = (start: number, length: number) => {
   return toArray(parameters);
 };
 
-export const toSQLType = (value: Primitive): string => {
-  if (typeof value === "string") return `'${value}'`;
-  return String(value);
-};
-
-export const toSQLArray = (array: Array<Primitive>) =>
-  toArray(array, toSQLType);
-
 export const toArray = (
-  array: Array<any>,
+  array: Array<string>,
   formatter?: (input: any) => string
 ) => {
   const format = formatter || defaultFormatter;
@@ -38,18 +30,10 @@ export const toArray = (
 };
 
 export const joinWhere = (queries: Array<string>) => {
-  return queries.reduce((SQLString: string, value: string, index: number) => {
-    if (index === 0) return SQLString + `${value}`;
-    return SQLString + " AND " + `${value}`;
-  }, "");
-};
-
-export const toValueArray = (
-  object: Record<string, Primitive | undefined>,
-  isUndefined?: (value: Primitive) => string
-): Array<Primitive> => {
-  //@ts-expect-error this is okay
-  return Object.values(object)
-    .map((entry) => entry)
-    .filter((value) => value !== undefined);
+  return queries
+    .reduce((SQLString: string, value: string, index: number) => {
+      if (index === 0) return SQLString + `${value}`;
+      return SQLString + " AND " + `${value}`;
+    }, "")
+    .trim();
 };
