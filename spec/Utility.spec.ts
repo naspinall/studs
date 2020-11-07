@@ -53,7 +53,7 @@ describe("To Array", () => {
 describe("Join Where", () => {
   it("Should Join A Single Statement", () => {
     const whereString = joinWhere(["id < 5", "name = 'Matt'"]);
-    expect(whereString).toBe("id < 5 AND name = 'Matt'");
+    expect(whereString).toBe("id < 5 and name = 'Matt'");
   });
 
   it("Should Join Multiple Statements", () => {

@@ -13,12 +13,19 @@ interface NamedParameterConfiguration extends OperatorConfiguration {
 }
 
 export class NamedParameter implements SelectOperator<any> {
-  private SQLString: string;
+  private SQLString!: string;
+  private SQLStringFunction!: (alias: string) => string;
+  private alias!: string;
   private parameterObject: ParameterObject;
   private parameterManager = new ParameterManager();
 
-  constructor(SQLString?: string, parameterObject?: ParameterObject) {
-    this.SQLString = SQLString || "";
+  constructor(
+    SQL: string | ((alias: string) => string),
+    parameterObject?: ParameterObject
+  ) {
+    if (typeof SQL === "string") this.SQLString = SQL;
+    else this.SQLStringFunction = SQL;
+
     this.parameterObject = parameterObject || {};
   }
 
@@ -26,10 +33,13 @@ export class NamedParameter implements SelectOperator<any> {
     count,
     SQLString,
     parameterObject,
+    alias,
+    column,
   }: NamedParameterConfiguration): NamedParameter {
     this.parameterManager.configure({ count });
     this.SQLString = SQLString || this.SQLString;
     this.parameterObject = parameterObject || this.parameterObject;
+    this.alias = `${alias}.${column}` || "";
     return this;
   }
 
@@ -62,6 +72,9 @@ export class NamedParameter implements SelectOperator<any> {
   // :value => a single parameter
   // :...value => multiple parameters
   toSQL(): [string, Array<Primitive>] {
+    if (this.SQLStringFunction)
+      this.SQLString = this.SQLStringFunction(this.alias);
+
     // Getting all names
     const names = Object.keys(this.parameterObject || {});
 

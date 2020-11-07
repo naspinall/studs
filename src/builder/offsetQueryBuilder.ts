@@ -1,15 +1,19 @@
+import { ParameterManager } from "../common/ParameterManager";
 import { OperatorConfiguration } from "../operators/Operator";
 import { Primitive } from "../utility/types";
 
 export class OffsetQueryBuilder {
   private offset: number = 0;
-  private parameterCount: number = 0;
+  private parameterManager = new ParameterManager();
 
-  configure(config: OperatorConfiguration): OffsetQueryBuilder {
-    this.parameterCount = config.count || 0;
+  getParameterManager(): ParameterManager {
+    return this.parameterManager;
+  }
+
+  configure({ count }: OperatorConfiguration): OffsetQueryBuilder {
+    this.parameterManager.configure({ count });
     return this;
   }
-  
 
   setOffset(offset: number) {
     if (!Number.isInteger(offset)) throw new Error("Invalid offset");
@@ -18,7 +22,8 @@ export class OffsetQueryBuilder {
 
   toSQL(): [string, Array<Primitive>] {
     if (this.offset > 0) {
-      return [`offset $${this.parameterCount + 1}`, [this.offset]];
+      const parameter = this.parameterManager.addValue(this.offset);
+      return [` offset ${parameter}`, [this.offset]];
     } else return ["", []];
   }
 }

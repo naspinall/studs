@@ -29,7 +29,7 @@ export class OrOperator<T> extends Operator<T> {
       this.parameterManager.merge(operator.getParameterManager());
 
       if (index === 0) this.sqlString += sqlString;
-      else this.sqlString += ` OR ${sqlString}`;
+      else this.sqlString += ` or ${sqlString}`;
 
       // Adding values
       parameters.push(...operator.getParameterManager().getParameters());

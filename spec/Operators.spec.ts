@@ -416,7 +416,7 @@ describe("Or", () => {
     });
 
     const [SQL] = operator.toSQL();
-    expect(SQL).toBe("(test.id = $1 OR test.id IS NULL)");
+    expect(SQL).toBe("(test.id = $1 or test.id IS NULL)");
   });
 
   it("Should Or With A Is Null With A Different Count", () => {
@@ -429,7 +429,7 @@ describe("Or", () => {
     });
 
     const [SQL] = operator.toSQL();
-    expect(SQL).toBe("(test.id = $11 OR test.id IS NULL)");
+    expect(SQL).toBe("(test.id = $11 or test.id IS NULL)");
   });
 
   it("Should Or With Two Parameters", () => {
@@ -441,7 +441,7 @@ describe("Or", () => {
     });
 
     const [SQL] = operator.toSQL();
-    expect(SQL).toBe("(test.id = $1 OR test.id < $2)");
+    expect(SQL).toBe("(test.id = $1 or test.id < $2)");
   });
 
   it("Should Or With Two Parameters", () => {
@@ -454,7 +454,7 @@ describe("Or", () => {
     });
 
     const [SQL] = operator.toSQL();
-    expect(SQL).toBe("(test.id = $11 OR test.id < $12)");
+    expect(SQL).toBe("(test.id = $11 or test.id < $12)");
   });
 
   it("Should Or With Two List Parameters", () => {
@@ -468,7 +468,7 @@ describe("Or", () => {
 
     const [SQL] = operator.toSQL();
     expect(SQL).toBe(
-      "(test.id IN ($11, $12, $13, $14, $15) OR test.id ANY ({ $16, $17 }))"
+      "(test.id IN ($11, $12, $13, $14, $15) or test.id ANY ({ $16, $17 }))"
     );
   });
 
@@ -482,7 +482,7 @@ describe("Or", () => {
     });
 
     const [SQL] = operator.toSQL();
-    expect(SQL).toBe("(test.id = $11 OR test.id < $12)");
+    expect(SQL).toBe("(test.id = $11 or test.id < $12)");
   });
 });
 
@@ -530,7 +530,7 @@ describe("Raw Operator", () => {
     });
 
     const [SQL] = operator.toSQL();
-    expect(SQL).toBe("(test.id <> 1 OR test.id > 100)");
+    expect(SQL).toBe("(test.id <> 1 or test.id > 100)");
   });
 
   it("Should Create Operator With Named Parameter", () => {

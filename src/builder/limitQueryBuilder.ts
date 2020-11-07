@@ -1,12 +1,17 @@
+import { ParameterManager } from "../common/ParameterManager";
 import { OperatorConfiguration } from "../operators/Operator";
 import { Primitive } from "../utility/types";
 
 export class LimitQueryBuilder {
   private limit: number = 0;
-  private parameterCount: number = 0;
+  private parameterManager = new ParameterManager();
 
-  configure(config: OperatorConfiguration): LimitQueryBuilder {
-    this.parameterCount = config.count || 0;
+  getParameterManager(): ParameterManager {
+    return this.parameterManager;
+  }
+
+  configure({ count }: OperatorConfiguration): LimitQueryBuilder {
+    this.parameterManager.configure({ count });
     return this;
   }
 
@@ -17,7 +22,8 @@ export class LimitQueryBuilder {
 
   toSQL(): [string, Array<Primitive>] {
     if (this.limit > 0) {
-      return [`limit $${this.parameterCount + 1}`, [this.limit]];
+      const parameter = this.parameterManager.addValue(this.limit);
+      return [` limit ${parameter}`, [this.limit]];
     } else return ["", []];
   }
 }

@@ -1,3 +1,4 @@
+import { ParameterManager } from "../common/ParameterManager";
 import { OperatorConfiguration } from "../operators/Operator";
 import { toArray } from "../utility/array";
 import { Primitive } from "../utility/types";
@@ -9,6 +10,11 @@ export interface OrderBy {
 
 export class OrderByQueryBuilder<T> {
   private orderByStatements: string[] = [];
+  private parameterManager = new ParameterManager()
+
+  getParameterManager() : ParameterManager {
+    return this.parameterManager
+  }
 
   configure(config: OperatorConfiguration): OrderByQueryBuilder<T> {
     return this;
@@ -26,6 +32,7 @@ export class OrderByQueryBuilder<T> {
     if (this.orderByStatements.length === 0) {
       return ["", []];
     }
-    return [`order by ${toArray(this.orderByStatements)}`, []];
+    
+    return [` order by ${toArray(this.orderByStatements)}`, []];
   }
 }

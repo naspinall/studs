@@ -33,12 +33,12 @@ interface InverseMapper {
 export class EntityMetadata {
   tableName!: string;
   schemaName!: string;
-  name : string
+  name: string;
   private mapper: Mapper = {};
   private inverseMapper: InverseMapper = {};
 
-  constructor(name : string) {
-    this.name = name
+  constructor(name: string) {
+    this.name = name;
   }
 
   setTableName(tableName: string) {
@@ -73,7 +73,7 @@ export class EntityMetadata {
   }
 
   inverseMap(databaseColumn: string, value: Primitive) {
-    const { type, name } = this.mapper[databaseColumn];
+    const { type, name } = this.inverseMapper[databaseColumn];
     return { name, value: fromSQLValue(value, type) };
   }
 
@@ -83,7 +83,7 @@ export class EntityMetadata {
   }
 
   inverseMapColumn(databaseColumn: string) {
-    const { name } = this.mapper[databaseColumn];
+    const { name } = this.inverseMapper[databaseColumn];
     return name;
   }
 
@@ -127,4 +127,4 @@ export const setTableSchema = (
   metadata[name].setTableName(tableName);
 };
 
-export const deleteEntity = (name : string) => delete metadata[name]
+export const deleteEntity = (name: string) => delete metadata[name];

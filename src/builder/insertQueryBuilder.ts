@@ -1,6 +1,6 @@
 import { client } from "../connection/connection";
-import { EntityMetadata, MapperValue } from "../metadata/metadata";
-import { toArray, toValueArray } from "../utility/array";
+import { EntityMetadata } from "../metadata/metadata";
+import { toArray } from "../utility/array";
 import {
   addSelectColumns,
   returningColumnsToSQL,
@@ -38,7 +38,8 @@ export class InsertQueryBuilder<T> extends QueryBuilder<T> {
             return `$${this.parameterCount}`;
           } else return "DEFAULT";
         })
-      ).map((row) => toArray(row));
+      )
+      .map((row) => toArray(row));
 
     //@ts-ignore
     return toArray(rows, (input: Primitive) => `(${input})`);

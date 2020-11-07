@@ -12,24 +12,14 @@ import { Primitive } from "../utility/types";
 
 export class WhereQueryBuilder<T> {
   private whereStatements: string[] = [];
-  private parameters: Primitive[] = [];
-  private parameterCount = 0;
+
   private alias!: string;
   private metadata!: EntityMetadata;
 
   private parameterManager = new ParameterManager();
 
-  protected buildWhere(): string {
-    // No where statements
-    if (this.whereStatements.length === 0) {
-      return "";
-    }
-
-    return `where${joinWhere(this.whereStatements)}`;
-  }
-
   configure(config: OperatorConfiguration): WhereQueryBuilder<T> {
-    this.parameterCount = config.count || 0;
+    this.parameterManager.configure({count : config.count})
     this.alias = config.alias || "";
     this.metadata = config.metadata || ({} as EntityMetadata);
     return this;
@@ -39,9 +29,6 @@ export class WhereQueryBuilder<T> {
     const whereKeys = Object.keys(values);
 
     for (const whereKey of whereKeys) {
-
-      console.log(whereKey)
-
       //@ts-ignore
       const databaseColumn = this.metadata.mapper[whereKey]?.name;
 
@@ -65,7 +52,7 @@ export class WhereQueryBuilder<T> {
     const namedParameter = new NamedParameter(SQLString, parameterObject);
     const [query] = namedParameter
       .configure({
-        count: this.parameterCount,
+        count: this.parameterManager.getParameterCount(),
       })
       .toSQL();
 
@@ -73,8 +60,11 @@ export class WhereQueryBuilder<T> {
     this.parameterManager.merge(namedParameter.getParameterManager());
   }
 
+  getParameterManager(): ParameterManager {
+    return this.parameterManager;
+  }
+
   private addOperator(column: string, operator: SelectOperator<T>) {
-    
     // Getting SQL
     const [query, value] = operator
       .configure({
@@ -97,6 +87,9 @@ export class WhereQueryBuilder<T> {
       return ["", []];
     }
 
-    return [`where ${joinWhere(this.whereStatements)}`, this.parameterManager.getParameters()];
+    return [
+      ` where ${joinWhere(this.whereStatements)}`,
+      this.parameterManager.getParameters(),
+    ];
   }
 }

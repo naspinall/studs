@@ -33,7 +33,7 @@ export const joinWhere = (queries: Array<string>) => {
   return queries
     .reduce((SQLString: string, value: string, index: number) => {
       if (index === 0) return SQLString + `${value}`;
-      return SQLString + " AND " + `${value}`;
+      return SQLString + " and " + `${value}`;
     }, "")
     .trim();
 };

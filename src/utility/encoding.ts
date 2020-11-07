@@ -54,7 +54,7 @@ export const escapeAllIdentifiers = (
   identifiers.reduce(
     (currentSql: string, identifier: string) =>
       currentSql.replace(
-        new RegExp(`(^|\\.|\\s)("?${identifier}"?)(\\.|\\s|$)`, "g"),
+        new RegExp(`(^|\\.|\\s)("?${identifier}"?)(\\.|\\s|$|,)`, "g"),
         `$1${escapeIdentifier(identifier)}$3`
       ),
     SQLString

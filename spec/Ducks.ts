@@ -1,6 +1,6 @@
-import { Column } from "../decorators/column";
-import { Entity } from "../decorators/entity";
-import { BaseEntity } from "../entity";
+import { Column } from "../src/decorators/column";
+import { Entity } from "../src/decorators/entity";
+import { BaseEntity } from "../src/entity";
 
 @Entity({
   tableName: "ducks",
@@ -18,7 +18,7 @@ export class Ducks extends BaseEntity {
   name!: string;
 
   @Column("text", {
-    name: "sid",
+    name: "feather_type",
   })
-  sid!: string;
+  featherType!: string;
 }

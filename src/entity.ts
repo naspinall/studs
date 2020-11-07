@@ -14,7 +14,6 @@ export class BaseEntity {
     alias?: string
   ) {
     const metadata = getMetadata<T>(this.name);
-    console.log(metadata)
     return new SelectQueryBuilder<T>(alias || toLowercase(this.name), metadata);
   }
 
