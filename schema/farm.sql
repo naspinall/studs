@@ -10,6 +10,7 @@ create table if not exists farm.ducks(
     id serial,
     name text,
     breed text,
+    feather_type text,
     house_id int references farm.house(id)
 );
 
@@ -17,6 +18,7 @@ create table if not exists farm.geese(
     id serial,
     name text,
     breed text,
+    feather_type text,
     house_id int references farm.house(id)
 );
 

@@ -9,6 +9,7 @@ import { Ducks } from "./Ducks";
 import { Or } from "../src/operators/Or";
 import { GreaterThan } from "../src/operators/GreaterThan";
 import { Raw } from "../src/operators/Raw";
+import { connectToDatabase } from "../src/connection/connection";
 
 describe("Where Builder", () => {
   beforeAll(() => {
@@ -223,5 +224,84 @@ describe("Select Builder", () => {
       `select * from "farm"."ducks" as "ducks" where "ducks"."id" = $1 and "ducks"."name" = $2`
     );
     expect(parameters).toStrictEqual(["1", "'Mundugus Fletcher'"]);
+  });
+});
+
+describe("Select Builder Querying Test Database", () => {
+  beforeAll(async () => {
+    await connectToDatabase();
+    setTableSchema("ducks", "ducks", "farm");
+    addColumn("ducks", "id", "id", "number", "int");
+    addColumn("ducks", "name", "name", "string", "text");
+  });
+
+  it("Should create a select query", async () => {
+    await Ducks.createSelectQueryBuilder("ducks").execute();
+  });
+
+  it("Should create a select query ordering", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .orderBy("id", "DESC")
+      .execute();
+  });
+
+  it("Should create a select query with a limit", async () => {
+    await Ducks.createSelectQueryBuilder("ducks").limit(100).execute();
+  });
+
+  it("Should create a select query with a group by", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .select("id")
+      .groupBy("ducks.id")
+      .execute();
+  });
+
+  it("Should create a select query with a group by", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .select("id")
+      .groupBy("ducks.id")
+      .execute();
+  });
+
+  it("Should create a select query with a group by and a having", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .select("id", "name")
+      .groupBy("ducks.id", "ducks.name")
+      .having("ducks.id > :value", { value: 1 })
+      .having("ducks.name = :value", { value: "Mundungus Fletcher" })
+      .execute();
+  });
+
+  it("Should create a select query with multiple group bys", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .select("id", "name")
+      .groupBy("ducks.id", "ducks.name")
+      .execute();
+  });
+
+  it("Should create a select query with an offset", async () => {
+    await Ducks.createSelectQueryBuilder("ducks").offset(100).execute();
+  });
+
+  it("Should create a select query with an offset and limit", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .offset(100)
+      .limit(100)
+      .execute();
+  });
+
+  it("Should create a select query with columns", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .select("id", "featherType")
+      .execute();
+  });
+
+  it("Should create a select query with where", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .where({
+        id: 1,
+        name: "Mundugus Fletcher",
+      })
+      .execute();
   });
 });

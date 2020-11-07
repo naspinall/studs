@@ -9,7 +9,8 @@ export const client = new Client({
 });
 
 const connectToDatabase = async () => await client.connect();
+const disconnectFromDatabase = async () => await client.end();
 
 const escapeIdentifier = (input: string) => client.escapeIdentifier(input);
 
-export { escapeIdentifier, connectToDatabase };
+export { escapeIdentifier, connectToDatabase, disconnectFromDatabase };
