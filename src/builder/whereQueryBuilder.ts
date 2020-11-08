@@ -19,7 +19,7 @@ export class WhereQueryBuilder<T> {
   private parameterManager = new ParameterManager();
 
   configure(config: OperatorConfiguration): WhereQueryBuilder<T> {
-    this.parameterManager.configure({count : config.count})
+    this.parameterManager.configure({ count: config.count });
     this.alias = config.alias || "";
     this.metadata = config.metadata || ({} as EntityMetadata);
     return this;

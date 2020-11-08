@@ -227,6 +227,28 @@ describe("Select Builder", () => {
   });
 });
 
+describe("Relation Builder", () => {
+  it("Should Build A Left Join ", () => {
+    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+      .leftJoin("farm.house", "house", "ducks.house_id = house.id")
+      .toSQL();
+
+    expect(query).toBe(
+      `select * from "farm"."ducks" as "ducks" left join "farm"."house" house on ( "ducks".house_id = "house"."id" )`
+    );
+  });
+
+  it("Should Build An Inner Join", () => {
+    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+      .innerJoin("farm.house", "house", "ducks.house_id = house.id")
+      .toSQL();
+
+    expect(query).toBe(
+      `select * from "farm"."ducks" as "ducks" inner join "farm"."house" house on ( "ducks".house_id = "house"."id" )`
+    );
+  });
+});
+
 describe("Select Builder Querying Test Database", () => {
   beforeAll(async () => {
     await connectToDatabase();
@@ -302,6 +324,18 @@ describe("Select Builder Querying Test Database", () => {
         id: 1,
         name: "Mundugus Fletcher",
       })
+      .execute();
+  });
+
+  it("Should Build A Left Join ", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .leftJoin("farm.house", "house", "ducks.house_id = house.id")
+      .execute();
+  });
+
+  it("Should Build An Inner Join", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .innerJoin("farm.house", "house", "ducks.house_id = house.id")
       .execute();
   });
 });

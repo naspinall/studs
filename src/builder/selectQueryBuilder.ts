@@ -12,6 +12,7 @@ import { LimitQueryBuilder } from "./limitQueryBuilder";
 import { OffsetQueryBuilder } from "./offsetQueryBuilder";
 import { OrderByQueryBuilder } from "./orderByQueryBuilder";
 import { QueryBuilder, QueryFactory } from "./queryBuilder";
+import { RelationQueryBuilder } from "./relationQueryBuilder";
 import { WhereQueryBuilder } from "./whereQueryBuilder";
 
 interface SelectColumn {
@@ -28,12 +29,12 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
   private offsetBuilder = new OffsetQueryBuilder();
   private orderByBuilder = new OrderByQueryBuilder<T>();
   private groupByBuilder = new GroupByQueryBuilder();
+  private relationBuilder = new RelationQueryBuilder();
 
   private parameterManager = new ParameterManager();
 
   constructor(alias: string, metadata: EntityMetadata) {
     super(alias, metadata);
-    this.alias = alias;
   }
 
   getParamCount() {
@@ -41,6 +42,7 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
   }
 
   select(...columns: (keyof T)[]): SelectQueryBuilder<T> {
+    // TODO This needs to be more generic, allowing for non entity's to be used
     // Setting selection columns, mapping to database
     this.selectColumns = addSelectColumns(columns, this.metadata);
     return this;
@@ -51,6 +53,16 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
       databaseName: expression,
       name: alias,
     });
+  }
+
+  leftJoin(entity: string, alias: string, condition: string) {
+    this.relationBuilder.leftJoin(entity, alias, condition);
+    return this;
+  }
+
+  innerJoin(entity: string, alias: string, condition: string) {
+    this.relationBuilder.innerJoin(entity, alias, condition);
+    return this;
   }
 
   where(values: Partial<T>): SelectQueryBuilder<T> {
@@ -119,17 +131,19 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
     const tableName = this.metadata.tableName;
 
     const whereQuery = this.addFactory(this.whereBuilder);
+    const joinQuery = this.addFactory(this.relationBuilder);
     const orderByQuery = this.addFactory(this.orderByBuilder);
     const offsetQuery = this.addFactory(this.offsetBuilder);
     const limitQuery = this.addFactory(this.limitBuilder);
     const groupByQuery = this.addFactory(this.groupByBuilder);
-    const havingQuery = this.addFactory(this.havingBuilder)
+    const havingQuery = this.addFactory(this.havingBuilder);
 
     const columns = selectColumnsToSQL(this.alias, this.selectColumns);
 
     const rawSQLString =
       `select ${columns} from ${schema}.${tableName} as ${this.alias}` +
       whereQuery +
+      joinQuery +
       groupByQuery +
       havingQuery +
       orderByQuery +
@@ -142,7 +156,8 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
       tableName,
       this.alias,
       ...this.metadata.listDatabaseColumns(),
-      ...this.metadata.listPropertyColumns()
+      ...this.metadata.listPropertyColumns(),
+      ...this.relationBuilder.getJoins().map(({ alias }) => alias)
     );
 
     return [SQLString, this.parameterManager.getParameters()];
