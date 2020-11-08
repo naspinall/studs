@@ -1,12 +1,6 @@
 import "reflect-metadata";
-import { Ducks } from "./entities/ducks";
 import { connectToDatabase } from "./connection/connection";
-import { Or } from "./operators/Or";
-import { Raw } from "./operators/Raw";
-import { Equal } from "./operators/Equal";
 import { Any } from "./operators/Any";
-import { GreaterThan } from "./operators/GreaterThan";
-import { GreaterThanOrEqual } from "./operators/GreaterThanOrEqual";
 import { LessThan } from "./operators/LessThan";
 (async () => {
   await connectToDatabase();

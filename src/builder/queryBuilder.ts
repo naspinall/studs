@@ -16,6 +16,7 @@ export class QueryBuilder<T> {
 
   protected client!: Client;
   protected alias!: string;
+  protected connection! : string;
 
   protected whereStatements: string[] = [];
   protected parameters: Primitive[] = [];

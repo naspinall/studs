@@ -9,7 +9,7 @@ import { Ducks } from "./Ducks";
 import { Or } from "../src/operators/Or";
 import { GreaterThan } from "../src/operators/GreaterThan";
 import { Raw } from "../src/operators/Raw";
-import { connectToDatabase } from "../src/connection/connection";
+import { createConnection } from "../src/connection/connection";
 
 describe("Where Builder", () => {
   beforeAll(() => {
@@ -251,7 +251,14 @@ describe("Relation Builder", () => {
 
 describe("Select Builder Querying Test Database", () => {
   beforeAll(async () => {
-    await connectToDatabase();
+    createConnection({
+      type: "postgres",
+      host: process.env.POSTGRES_HOST,
+      port: Number(process.env.POSTGRES_POST),
+      user: process.env.POSTGRES_USER,
+      password: process.env.POSTGRES_PASSWORD,
+      database: process.env.POSTGRES_DB,
+    });
     setTableSchema("ducks", "ducks", "farm");
     addColumn("ducks", "id", "id", "number", "int");
     addColumn("ducks", "name", "name", "string", "text");

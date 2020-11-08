@@ -1,4 +1,4 @@
-import { client, escapeIdentifier } from "../connection/connection";
+import { escapeIdentifier, escapeLiteral } from "../connection/connection";
 import { Primitive } from "./types";
 
 export type PostgresType =
@@ -25,9 +25,9 @@ export const toSQLValue = (value: Primitive, type: PostgresType): string => {
     case "timestamptz":
       return String((value as Date)?.toISOString());
     case "varchar":
-      return client.escapeLiteral(String(value));
+      return escapeLiteral(String(value));
     case "text":
-      return client.escapeLiteral(String(value));
+      return escapeLiteral(String(value));
     default:
       throw new Error("Bad TYPE");
   }

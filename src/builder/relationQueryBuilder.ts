@@ -13,7 +13,6 @@ interface Join {
 export class RelationQueryBuilder {
   private joins: Join[] = [];
 
-
   private parameterManager = new ParameterManager();
 
   getParameterManager() {

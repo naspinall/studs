@@ -1,5 +1,5 @@
 import { ParameterManager } from "../common/ParameterManager";
-import { client } from "../connection/connection";
+import { getConnection } from "../connection/connection";
 import { EntityMetadata } from "../metadata/metadata";
 import { ParameterObject } from "../operators/NamedParameters";
 import { OperatorConfiguration } from "../operators/Operator";
@@ -115,7 +115,7 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
   }
 
   private addFactory(factory: QueryFactory<T>): string {
-    const [query, parameters] = factory
+    const [query] = factory
       .configure({
         count: this.parameterManager.getParameterCount(),
         alias: this.alias,
@@ -165,7 +165,6 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
 
   async execute() {
     const [query, parameters] = this.toSQL();
-    const { rows } = await client.query(query, parameters);
-    return rows;
+    return await getConnection(this.connection).read(query, parameters);
   }
 }
