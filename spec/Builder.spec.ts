@@ -229,6 +229,16 @@ describe("Select Builder", () => {
     );
     expect(parameters).toStrictEqual(["1", "'Mundugus Fletcher'"]);
   });
+
+  it("Should create a select query with a named parameter where", () => {
+    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+      .where("ducks.id <> :value", { value: 1 })
+      .toSQL();
+    expect(query).toBe(
+      `select * from "farm"."ducks" as "ducks" where "ducks"."id" <> $1`
+    );
+    expect(parameters).toStrictEqual([1]);
+  });
 });
 
 describe("Relation Builder", () => {
@@ -239,6 +249,16 @@ describe("Relation Builder", () => {
 
     expect(query).toBe(
       `select * from "farm"."ducks" as "ducks" left join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
+    );
+  });
+
+  it("Should Build A Left Join And Select", () => {
+    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+      .leftJoinAndSelect("farm.house", "house", "ducks.houseId = house.id")
+      .toSQL();
+
+    expect(query).toBe(
+      `select "house".* from "farm"."ducks" as "ducks" left join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
     );
   });
 
@@ -263,6 +283,16 @@ describe("Relation Builder", () => {
     );
   });
 
+  it("Should Build An Inner Join And Select", () => {
+    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+      .innerJoinAndSelect("farm.house", "house", "ducks.houseId = house.id")
+      .toSQL();
+
+    expect(query).toBe(
+      `select "house".* from "farm"."ducks" as "ducks" inner join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
+    );
+  });
+
   it("Should Build A Right Join", () => {
     const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
       .rightJoin("farm.house", "house", "ducks.houseId = house.id")
@@ -270,6 +300,16 @@ describe("Relation Builder", () => {
 
     expect(query).toBe(
       `select * from "farm"."ducks" as "ducks" right join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
+    );
+  });
+
+  it("Should Build A Right Join And Select", () => {
+    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+      .rightJoinAndSelect("farm.house", "house", "ducks.houseId = house.id")
+      .toSQL();
+
+    expect(query).toBe(
+      `select "house".* from "farm"."ducks" as "ducks" right join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
     );
   });
 

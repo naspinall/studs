@@ -19,7 +19,7 @@ import { WhereQueryBuilder } from "./whereQueryBuilder";
 
 interface SelectExpression {
   expression: string;
-  alias: string;
+  alias?: string;
 }
 
 export class SelectQueryBuilder<T> extends QueryBuilder<T> {
@@ -70,7 +70,7 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
 
   selectExpressionToSQL(): string {
     const selectFormatter = (input: SelectExpression) =>
-      `${input.expression} as ${input.alias}`;
+      input.alias ? `${input.expression} as ${input.alias}` : input.expression;
     return this.selectExpressions.length === 0
       ? "*"
       : toArray(this.selectExpressions, selectFormatter);
@@ -122,7 +122,7 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
     else this.relationBuilder.join("inner", entity, alias, condition);
     return this;
   }
-
+  
   rightJoin(
     entity: Entity<any>,
     alias: string,
@@ -141,7 +141,72 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
     return this;
   }
 
-  where(values: Partial<T>): SelectQueryBuilder<T> {
+  leftJoinAndSelect(
+    entity: Entity<any>,
+    alias: string,
+    condition: string
+  ): SelectQueryBuilder<T>;
+  leftJoinAndSelect(
+    tableName: string,
+    alias: string,
+    condition: string
+  ): SelectQueryBuilder<T>;
+
+  leftJoinAndSelect(entity: string | Entity<any>, alias: string, condition: string) {
+    this.selectExpressions.push({
+      expression : `${alias}.*`
+    })
+    if (typeof entity === "string")
+      this.relationBuilder.join("left", entity, alias, condition);
+    else this.relationBuilder.join("left", entity, alias, condition);
+    return this;
+  }
+
+  innerJoinAndSelect(
+    entity: Entity<any>,
+    alias: string,
+    condition: string
+  ): SelectQueryBuilder<T>;
+  innerJoinAndSelect(
+    tableName: string,
+    alias: string,
+    condition: string
+  ): SelectQueryBuilder<T>;
+
+  innerJoinAndSelect(entity: string | Entity<any>, alias: string, condition: string) {
+    this.selectExpressions.push({
+      expression : `${alias}.*`
+    })
+    if (typeof entity === "string")
+      this.relationBuilder.join("inner", entity, alias, condition);
+    else this.relationBuilder.join("inner", entity, alias, condition);
+    return this;
+  }
+
+  rightJoinAndSelect(
+    entity: Entity<any>,
+    alias: string,
+    condition: string
+  ): SelectQueryBuilder<T>;
+  rightJoinAndSelect(
+    tableName: string,
+    alias: string,
+    condition: string
+  ): SelectQueryBuilder<T>;
+
+  rightJoinAndSelect(entity: string | Entity<any>, alias: string, condition: string) {
+    this.selectExpressions.push({
+      expression : `${alias}.*`
+    })
+    if (typeof entity === "string")
+      this.relationBuilder.join("right", entity, alias, condition);
+    else this.relationBuilder.join("right", entity, alias, condition);
+    return this;
+  }
+
+  where(values: Partial<T> | string, parameters? : ParameterObject): SelectQueryBuilder<T> {
+    if(typeof values === "string")
+      return this.andWhere(values,parameters )
     this.whereBuilder
       .configure({
         alias: this.alias,
@@ -157,7 +222,7 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
 
   andWhere(
     SQLString: string,
-    parameterObject: ParameterObject
+    parameterObject?: ParameterObject
   ): SelectQueryBuilder<T> {
     this.whereBuilder.andWhere(SQLString, parameterObject);
     return this;
@@ -208,7 +273,7 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
       this.metadata.tableName,
       this.alias,
       ...this.metadata.listDatabaseColumns(),
-      ...this.selectExpressions.map(({ alias }) => alias),
+      ...this.selectExpressions.map(({ alias }) => alias).filter( alias => alias) as Array<string>,
     ];
 
     return aliases;

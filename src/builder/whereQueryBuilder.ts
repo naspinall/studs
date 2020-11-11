@@ -47,7 +47,7 @@ export class WhereQueryBuilder<T> {
     }
   }
 
-  andWhere(SQLString: string, parameterObject: ParameterObject) {
+  andWhere(SQLString: string, parameterObject?: ParameterObject) {
     // And where are named parameters, allowing for any query to be written safely
     const namedParameter = new NamedParameter(SQLString, parameterObject);
     const [query] = namedParameter
