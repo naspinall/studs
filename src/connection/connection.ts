@@ -1,5 +1,4 @@
 import { Client, Pool } from "pg";
-// import { QueryRunner } from "../queryRunner/queryRunner";
 import { Primitive } from "../utility/types";
 
 interface Connections {
@@ -47,6 +46,10 @@ class SingleConnection implements Connection {
   async read(query: string, parameters: Array<Primitive>) {
     const client = await this.pool.connect();
     try {
+      console.log({
+        query,
+        parameters
+      })
       const { rows } = await client.query(query, parameters);
       return rows;
     } catch (error) {

@@ -1,10 +1,12 @@
 import { ParameterManager } from "../common/ParameterManager";
 import { getConnection } from "../connection/connection";
+import { Entity } from "../entity";
 import { EntityMetadata } from "../metadata/metadata";
 import { ParameterObject } from "../operators/NamedParameters";
 import { OperatorConfiguration } from "../operators/Operator";
-import { escapeAllIdentifiers } from "../utility/encoding";
-import { addSelectColumns, selectColumnsToSQL } from "../utility/select";
+import { toArray } from "../utility/array";
+import { escapeAllIdentifiers, escapeColumns } from "../utility/encoding";
+import { SelectColumn } from "../utility/select";
 import { Primitive } from "../utility/types";
 import { GroupByQueryBuilder } from "./groupByQueryBuilder";
 import { HavingQueryBuilder } from "./havingQueryBuilder";
@@ -15,13 +17,14 @@ import { QueryBuilder, QueryFactory } from "./queryBuilder";
 import { RelationQueryBuilder } from "./relationQueryBuilder";
 import { WhereQueryBuilder } from "./whereQueryBuilder";
 
-interface SelectColumn {
-  databaseName: string;
-  name: string;
+interface SelectExpression {
+  expression: string;
+  alias: string;
 }
 
 export class SelectQueryBuilder<T> extends QueryBuilder<T> {
   private selectColumns: SelectColumn[] = [];
+  private selectExpressions: SelectExpression[] = [];
 
   private whereBuilder = new WhereQueryBuilder<T>();
   private havingBuilder = new HavingQueryBuilder();
@@ -42,28 +45,84 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
   }
 
   select(...columns: (keyof T)[]): SelectQueryBuilder<T> {
-    // TODO This needs to be more generic, allowing for non entity's to be used
     // Setting selection columns, mapping to database
-    this.selectColumns = addSelectColumns(columns, this.metadata);
+    const selectExpressions: Array<SelectExpression> = columns.map((column) => {
+      const databaseName = this.metadata.mapColumn(column as string);
+      const expression = `${this.alias}.${databaseName}`;
+      return {
+        expression,
+        alias: column as string,
+      };
+    });
+
+    // Adding new select columns
+    this.selectExpressions.push(...selectExpressions);
     return this;
   }
 
   addSelect(expression: string, alias: string) {
-    this.selectColumns.push({
-      databaseName: expression,
-      name: alias,
+    this.selectExpressions.push({
+      expression,
+      alias,
     });
-  }
-
-  leftJoin(entity: string, alias: string, condition: string) {
-    this.relationBuilder.leftJoin(entity, alias, condition);
     return this;
   }
 
-  innerJoin(entity: string, alias: string, condition: string) {
-    this.relationBuilder.innerJoin(entity, alias, condition);
+  selectExpressionToSQL(): string {
+    const selectFormatter = (input: SelectExpression) =>
+      `${input.expression} as ${input.alias}`;
+    return this.selectExpressions.length === 0
+      ? "*"
+      : toArray(this.selectExpressions, selectFormatter);
+  }
+
+  selectColumnsToSQL(): string {
+    const selectFormatter = (input: SelectColumn) =>
+      input.expression
+        ? `${input.expression} as ${input.columnAlias}`
+        : `${this.alias}.${input.databaseName} as ${input.columnAlias}`;
+    return this.selectColumns.length === 0 &&
+      this.selectExpressions.length === 0
+      ? "*"
+      : toArray(this.selectColumns, selectFormatter);
+  }
+
+  leftJoin(
+    entity: Entity<any>,
+    alias: string,
+    condition: string
+  ): SelectQueryBuilder<T>;
+  leftJoin(
+    tableName: string,
+    alias: string,
+    condition: string
+  ): SelectQueryBuilder<T>;
+
+  leftJoin(entity: string | Entity<any>, alias: string, condition: string) {
+    if (typeof entity === "string")
+      this.relationBuilder.leftJoin(entity, alias, condition);
+    else this.relationBuilder.leftJoin(entity, alias, condition);
     return this;
   }
+
+  innerJoin(
+    entity: Entity<any>,
+    alias: string,
+    condition: string
+  ): SelectQueryBuilder<T>;
+  innerJoin(
+    tableName: string,
+    alias: string,
+    condition: string
+  ): SelectQueryBuilder<T>;
+
+  innerJoin(entity: string | Entity<any>, alias: string, condition: string) {
+    if (typeof entity === "string")
+      this.relationBuilder.innerJoin(entity, alias, condition);
+    else this.relationBuilder.innerJoin(entity, alias, condition);
+    return this;
+  }
+
 
   where(values: Partial<T>): SelectQueryBuilder<T> {
     this.whereBuilder
@@ -126,6 +185,18 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
     return query;
   }
 
+  private getAliases(): Array<string> {
+    const aliases = [
+      this.metadata.schemaName,
+      this.metadata.tableName,
+      this.alias,
+      ...this.metadata.listDatabaseColumns(),
+      ...this.selectExpressions.map(({ alias }) => alias),
+    ];
+
+    return aliases;
+  }
+
   toSQL(): [string, Primitive[]] {
     const schema = this.metadata.schemaName;
     const tableName = this.metadata.tableName;
@@ -138,7 +209,7 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
     const groupByQuery = this.addFactory(this.groupByBuilder);
     const havingQuery = this.addFactory(this.havingBuilder);
 
-    const columns = selectColumnsToSQL(this.alias, this.selectColumns);
+    const columns = this.selectExpressionToSQL();
 
     const rawSQLString =
       `select ${columns} from ${schema}.${tableName} as ${this.alias}` +
@@ -150,15 +221,9 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
       offsetQuery +
       limitQuery;
 
-    const SQLString = escapeAllIdentifiers(
-      rawSQLString,
-      schema,
-      tableName,
-      this.alias,
-      ...this.metadata.listDatabaseColumns(),
-      ...this.metadata.listPropertyColumns(),
-      ...this.relationBuilder.getJoins().map(({ alias }) => alias)
-    );
+    let SQLString = escapeColumns(rawSQLString, this.alias, this.metadata);
+    SQLString = this.relationBuilder.escapeAllRelations(SQLString);
+    SQLString = escapeAllIdentifiers(SQLString, ...this.getAliases());
 
     return [SQLString, this.parameterManager.getParameters()];
   }

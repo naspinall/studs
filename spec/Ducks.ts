@@ -18,7 +18,17 @@ export class Ducks extends BaseEntity {
   name!: string;
 
   @Column("text", {
+    name: "breed",
+  })
+  breed!: string;
+
+  @Column("text", {
     name: "feather_type",
   })
   featherType!: string;
+
+  @Column("integer", {
+    name: "house_id",
+  })
+  houseId! : string;
 }

@@ -19,9 +19,9 @@ export const toParameterList = (start: number, length: number) => {
 };
 
 export const toArray = (
-  array: Array<string>,
+  array: Array<any>,
   formatter?: (input: any) => string
-) => {
+) : string => {
   const format = formatter || defaultFormatter;
   return array.reduce((SQLString: string, value: Primitive, index: number) => {
     if (index === 0) return SQLString + format(value);

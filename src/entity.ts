@@ -4,13 +4,15 @@ import { getMetadata } from "./metadata/metadata";
 import { toLowercase } from "./utility/array";
 import { Primitive } from "./utility/types";
 
-export type ClassType<T> = { new (): T };
-export type Entity<T> = { [K in keyof T]: Primitive };
+export interface Entity<T> {
+  new (): T;
+}
+
 export type PartialEntity<T extends Entity<T>> = Partial<T>;
 
 export class BaseEntity {
   static createSelectQueryBuilder<T extends BaseEntity>(
-    this: ClassType<T>,
+    this: Entity<T>,
     alias?: string
   ) {
     const metadata = getMetadata<T>(this.name);
@@ -18,7 +20,7 @@ export class BaseEntity {
   }
 
   static createInsertQueryBuilder<T extends BaseEntity>(
-    this: ClassType<T>,
+    this: Entity<T>,
     alias?: string
   ) {
     const metadata = getMetadata<T>(this.name);

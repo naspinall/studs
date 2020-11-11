@@ -159,6 +159,21 @@ describe("Escape All Identifiers", () => {
       `select "farm"."id" from "farm" as "farm" where "id" = 'sid'`
     );
   });
+
+  it("Should Escape With A Similar Name As An Identifier With An Underscore", () => {
+    const sqlString = escapeAllIdentifiers(
+      `select * from farm.ducks as ducks left join farm.house house on ( ducks.house_id = house.id )`,
+      "farm",
+      "id",
+      "ducks",
+      "house",
+      "house_id"
+
+    );
+    expect(sqlString).toBe(
+      `select * from "farm"."ducks" as "ducks" left join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
+    );
+  });
 });
 
 describe("", () => {

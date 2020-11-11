@@ -1,4 +1,5 @@
 import { escapeIdentifier, escapeLiteral } from "../connection/connection";
+import { EntityMetadata } from "../metadata/metadata";
 import { Primitive } from "./types";
 
 export type PostgresType =
@@ -47,6 +48,28 @@ export const fromSQLValue = (value: Primitive, type: StudsType) => {
 };
 
 // Escapes provided identifiers in a given SQL string
+export const escapeColumns = (
+  SQLString: string,
+  alias: string,
+  entityMetadata: EntityMetadata
+) =>
+  entityMetadata
+    .listPropertyColumns()
+    .reduce(
+      (currentSql: string, propertyColumn: string) =>
+        currentSql.replace(
+          new RegExp(
+            `("|\\b)("?${alias}"?\\."?${propertyColumn}"?)("|\\b)`,
+            "g"
+          ),
+          `$1${escapeIdentifier(alias)}.${escapeIdentifier(
+            entityMetadata.mapColumn(propertyColumn)
+          )}$3`
+        ),
+      SQLString
+    );
+
+// Escapes provided identifiers in a given SQL string
 export const escapeAllIdentifiers = (
   SQLString: string,
   ...identifiers: Array<string>
@@ -54,8 +77,8 @@ export const escapeAllIdentifiers = (
   identifiers.reduce(
     (currentSql: string, identifier: string) =>
       currentSql.replace(
-        new RegExp(`(^|\\.|\\s)("?${identifier}"?)(\\.|\\s|$|,)`, "g"),
-        `$1${escapeIdentifier(identifier)}$3`
+        new RegExp(`("|\\b)(${identifier})("|\\b)`, "g"),
+        `${escapeIdentifier(identifier)}`
       ),
     SQLString
   );

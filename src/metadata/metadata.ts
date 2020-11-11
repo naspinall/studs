@@ -1,3 +1,5 @@
+import { Entity } from "../entity";
+import { toLowercase } from "../utility/array";
 import {
   fromSQLValue,
   PostgresType,
@@ -9,7 +11,7 @@ import { Primitive } from "../utility/types";
 const metadata: Metadata = {};
 
 interface ObjectType {
-  [index: string]: any;
+  [index: string]: Primitive;
 }
 
 interface Metadata {
@@ -77,6 +79,17 @@ export class EntityMetadata {
     return { name, value: fromSQLValue(value, type) };
   }
 
+  inverseMapAll(rawRows: Array<ObjectType>) {
+    rawRows.map((rawRow) => {
+      const row: ObjectType = {};
+      Object.entries(rawRow).forEach((entry) => {
+        const [databaseColumn, rawValue] = entry;
+        const { name, value } = this.inverseMap(databaseColumn, rawValue);
+        row[name] = value;
+      });
+    });
+  }
+
   mapColumn(propertyColumn: string) {
     const { name } = this.mapper[propertyColumn];
     return name;
@@ -104,7 +117,12 @@ export class EntityMetadata {
   }
 }
 
-export const getMetadata = <T>(name: string): EntityMetadata => metadata[name];
+export const getMetadata = <T>(entity: Entity<T> | string): EntityMetadata => {
+  if (typeof entity === "string") {
+    return metadata[entity];
+  }
+  return metadata[entity.constructor.name];
+};
 
 export const addColumn = (
   name: string,

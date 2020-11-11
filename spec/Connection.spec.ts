@@ -17,8 +17,6 @@ describe("Connecting To With A Single Database Connection", () => {
   it("Should Perform A Basic Select Query", async () => {
     await Ducks.createSelectQueryBuilder("ducks").execute();
   });
-
-  afterAll(async () => {});
 });
 
 describe("Connecting To With A Replicated Database Connection", () => {
@@ -47,6 +45,4 @@ describe("Connecting To With A Replicated Database Connection", () => {
   it("Should Perform A Basic Select Query", async () => {
     await Ducks.createSelectQueryBuilder("ducks").execute();
   });
-
-  afterAll(async () => {});
 });

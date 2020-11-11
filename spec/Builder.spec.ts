@@ -10,6 +10,7 @@ import { Or } from "../src/operators/Or";
 import { GreaterThan } from "../src/operators/GreaterThan";
 import { Raw } from "../src/operators/Raw";
 import { createConnection } from "../src/connection/connection";
+import { House } from "./House";
 
 describe("Where Builder", () => {
   beforeAll(() => {
@@ -116,6 +117,9 @@ describe("Select Builder", () => {
     setTableSchema("ducks", "ducks", "farm");
     addColumn("ducks", "id", "id", "number", "int");
     addColumn("ducks", "name", "name", "string", "text");
+
+    setTableSchema("house", "house", "farm");
+    addColumn("house", "id", "id", "number", "int");
   });
 
   it("Should create a select query", () => {
@@ -230,21 +234,42 @@ describe("Select Builder", () => {
 describe("Relation Builder", () => {
   it("Should Build A Left Join ", () => {
     const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
-      .leftJoin("farm.house", "house", "ducks.house_id = house.id")
+      .leftJoin("farm.house", "house", "ducks.houseId = house.id")
       .toSQL();
 
     expect(query).toBe(
-      `select * from "farm"."ducks" as "ducks" left join "farm"."house" house on ( "ducks".house_id = "house"."id" )`
+      `select * from "farm"."ducks" as "ducks" left join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
+    );
+  });
+
+  it("Should Build A Left Join And Select From Join", () => {
+    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+      .addSelect("ducks.id", "id")
+      .leftJoin("farm.house", "house", "ducks.houseId = house.id")
+      .toSQL();
+
+    expect(query).toBe(
+      `select "ducks"."id" as "id" from "farm"."ducks" as "ducks" left join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
     );
   });
 
   it("Should Build An Inner Join", () => {
     const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
-      .innerJoin("farm.house", "house", "ducks.house_id = house.id")
+      .innerJoin("farm.house", "house", "ducks.houseId = house.id")
       .toSQL();
 
     expect(query).toBe(
-      `select * from "farm"."ducks" as "ducks" inner join "farm"."house" house on ( "ducks".house_id = "house"."id" )`
+      `select * from "farm"."ducks" as "ducks" inner join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
+    );
+  });
+
+  it("Should Build A Left Join With Two Entities", () => {
+    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+      .leftJoin(House, "house", "ducks.houseId = house.id")
+      .toSQL();
+
+    expect(query).toBe(
+      `select * from "farm"."ducks" as "ducks" left join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
     );
   });
 });
@@ -262,10 +287,14 @@ describe("Select Builder Querying Test Database", () => {
     setTableSchema("ducks", "ducks", "farm");
     addColumn("ducks", "id", "id", "number", "int");
     addColumn("ducks", "name", "name", "string", "text");
+    addColumn("ducks", "breed", "breed", "string", "text");
+    addColumn("ducks", "featherType", "feather_type", "string", "text");
   });
 
   it("Should create a select query", async () => {
-    await Ducks.createSelectQueryBuilder("ducks").execute();
+    const ducks = await Ducks.createSelectQueryBuilder("ducks")
+      .select("id")
+      .execute();
   });
 
   it("Should create a select query ordering", async () => {
@@ -340,9 +369,32 @@ describe("Select Builder Querying Test Database", () => {
       .execute();
   });
 
+  it("Should Build A Left Join ", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .leftJoin("farm.house", "house", "ducks.house_id = house.id")
+      .addSelect("house.id", "houseId")
+      .execute();
+  });
+
+  it("Should Build A Left Join With An Entity", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .addSelect("house.id", "house")
+      .leftJoin(House, "house", "ducks.house_id = house.id")
+      .execute();
+  });
+
   it("Should Build An Inner Join", async () => {
     await Ducks.createSelectQueryBuilder("ducks")
+      .addSelect("house.id", "house")
       .innerJoin("farm.house", "house", "ducks.house_id = house.id")
       .execute();
   });
+
+  it("Should Build An Inner Join", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .addSelect("house.id", "house")
+      .innerJoin(House, "house", "ducks.house_id = house.id")
+      .execute();
+  });
+
 });

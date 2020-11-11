@@ -1,8 +1,7 @@
-import { client } from "../connection/connection";
+import { escapeIdentifier, escapeLiteral } from "../connection/connection";
 import { EntityMetadata } from "../metadata/metadata";
 import { toArray } from "../utility/array";
 import {
-  addSelectColumns,
   returningColumnsToSQL,
   SelectColumn,
 } from "../utility/select";
@@ -50,14 +49,14 @@ export class InsertQueryBuilder<T> extends QueryBuilder<T> {
     return this;
   }
 
-  returning(...columns: (keyof T)[]) {
-    this.returningColumns = addSelectColumns(columns, this.metadata);
+  returning() {
+    //this.returningColumns = addSelectColumns(columns, this.metadata);
     return this;
   }
 
   toSQL(): [string, Array<Primitive>] {
-    const schema = client.escapeIdentifier("farm");
-    const tableName = client.escapeIdentifier("houses");
+    const schema = escapeIdentifier("farm");
+    const tableName = escapeIdentifier("houses");
 
     const returning = returningColumnsToSQL(this.returningColumns);
 
@@ -71,7 +70,7 @@ export class InsertQueryBuilder<T> extends QueryBuilder<T> {
 
     const values = toArray(
       this.metadata.listDatabaseColumns(),
-      (input: Primitive) => client.escapeLiteral(String(input))
+      (input: Primitive) => escapeLiteral(String(input))
     );
 
     const insertRows = this.toInsertRows();
