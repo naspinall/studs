@@ -263,6 +263,16 @@ describe("Relation Builder", () => {
     );
   });
 
+  it("Should Build A Right Join", () => {
+    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+      .rightJoin("farm.house", "house", "ducks.houseId = house.id")
+      .toSQL();
+
+    expect(query).toBe(
+      `select * from "farm"."ducks" as "ducks" right join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
+    );
+  });
+
   it("Should Build A Left Join With Two Entities", () => {
     const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
       .leftJoin(House, "house", "ducks.houseId = house.id")
@@ -270,6 +280,16 @@ describe("Relation Builder", () => {
 
     expect(query).toBe(
       `select * from "farm"."ducks" as "ducks" left join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
+    );
+  });
+
+  it("Should Build A Right Join With Two Entities", () => {
+    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+      .rightJoin(House, "house", "ducks.houseId = house.id")
+      .toSQL();
+
+    expect(query).toBe(
+      `select * from "farm"."ducks" as "ducks" right join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
     );
   });
 });
@@ -397,4 +417,17 @@ describe("Select Builder Querying Test Database", () => {
       .execute();
   });
 
+  it("Should Build A Right Join", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .addSelect("house.id", "house")
+      .rightJoin("farm.house", "house", "ducks.house_id = house.id")
+      .execute();
+  });
+
+  it("Should Build A Right Join", async () => {
+    await Ducks.createSelectQueryBuilder("ducks")
+      .addSelect("house.id", "house")
+      .rightJoin(House, "house", "ducks.house_id = house.id")
+      .execute();
+  });
 });

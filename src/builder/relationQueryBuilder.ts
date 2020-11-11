@@ -5,10 +5,12 @@ import { OperatorConfiguration } from "../operators/Operator";
 import { escapeAllIdentifiers, escapeColumns } from "../utility/encoding";
 import { Primitive } from "../utility/types";
 
+type JoinType = "inner" | "left" | "outer" | "right";
+
 interface Join {
   name: string;
   alias: string;
-  type: "inner" | "left";
+  type: JoinType;
   condition?: string;
 }
 
@@ -32,23 +34,16 @@ export class RelationQueryBuilder {
     return this;
   }
 
-  leftJoin(
-    entity: Entity<any>,
+   join(
+    type: JoinType,
+    entity: string | Entity<any>,
     alias: string,
     condition: string
-  ): RelationQueryBuilder;
-
-  leftJoin(
-    tableName: string,
-    alias: string,
-    condition: string
-  ): RelationQueryBuilder;
-
-  leftJoin(entity: string | Entity<any>, alias: string, condition: string) {
+  ) {
     if (typeof entity === "string")
       this.joins.push({
         name: entity,
-        type: "left",
+        type : type || "inner",
         alias,
         condition,
       });
@@ -60,44 +55,7 @@ export class RelationQueryBuilder {
       });
       this.joins.push({
         name: `${metadata.schemaName}.${metadata.tableName}`,
-        type: "left",
-        alias,
-        condition,
-      });
-    }
-
-    return this;
-  }
-
-  innerJoin(
-    entity: Entity<any>,
-    alias: string,
-    condition: string
-  ): RelationQueryBuilder;
-
-  innerJoin(
-    tableName: string,
-    alias: string,
-    condition: string
-  ): RelationQueryBuilder;
-
-  innerJoin(entity: string | Entity<any>, alias: string, condition: string) {
-    if (typeof entity === "string")
-      this.joins.push({
-        name: entity,
-        type: "inner",
-        alias,
-        condition,
-      });
-    else {
-      const metadata = getMetadata(entity.name);
-      this.relations.push({
-        metadata,
-        alias,
-      });
-      this.joins.push({
-        name: `${metadata.schemaName}.${metadata.tableName}`,
-        type: "inner",
+        type : type || "inner",
         alias,
         condition,
       });

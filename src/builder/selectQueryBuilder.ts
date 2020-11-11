@@ -100,8 +100,8 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
 
   leftJoin(entity: string | Entity<any>, alias: string, condition: string) {
     if (typeof entity === "string")
-      this.relationBuilder.leftJoin(entity, alias, condition);
-    else this.relationBuilder.leftJoin(entity, alias, condition);
+      this.relationBuilder.join("left", entity, alias, condition);
+    else this.relationBuilder.join("left", entity, alias, condition);
     return this;
   }
 
@@ -118,11 +118,28 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
 
   innerJoin(entity: string | Entity<any>, alias: string, condition: string) {
     if (typeof entity === "string")
-      this.relationBuilder.innerJoin(entity, alias, condition);
-    else this.relationBuilder.innerJoin(entity, alias, condition);
+      this.relationBuilder.join("inner", entity, alias, condition);
+    else this.relationBuilder.join("inner", entity, alias, condition);
     return this;
   }
 
+  rightJoin(
+    entity: Entity<any>,
+    alias: string,
+    condition: string
+  ): SelectQueryBuilder<T>;
+  rightJoin(
+    tableName: string,
+    alias: string,
+    condition: string
+  ): SelectQueryBuilder<T>;
+
+  rightJoin(entity: string | Entity<any>, alias: string, condition: string) {
+    if (typeof entity === "string")
+      this.relationBuilder.join("right", entity, alias, condition);
+    else this.relationBuilder.join("right", entity, alias, condition);
+    return this;
+  }
 
   where(values: Partial<T>): SelectQueryBuilder<T> {
     this.whereBuilder
