@@ -137,6 +137,27 @@ describe("Select Builder", () => {
     );
     expect(parameters).toStrictEqual([]);
   });
+  
+
+  it("Should create a select query ordering object", () => {
+    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+      .orderBy({ id: "DESC" })
+      .toSQL();
+    expect(query).toBe(
+      `select * from "farm"."ducks" as "ducks" order by "id" DESC`
+    );
+    expect(parameters).toStrictEqual([]);
+  });
+
+  it("Should create a select query ordering object", () => {
+    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+      .orderBy({ id: "DESC", name : "ASC" })
+      .toSQL();
+    expect(query).toBe(
+      `select * from "farm"."ducks" as "ducks" order by "id" DESC, "name" ASC`
+    );
+    expect(parameters).toStrictEqual([]);
+  });
 
   it("Should create a select query with a limit", () => {
     const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")

@@ -22,6 +22,15 @@ interface SelectExpression {
   alias?: string;
 }
 
+interface OrderByObject {
+  [index: string]: "DESC" | "ASC";
+}
+
+const IsOrderBy = (check: any): check is OrderByObject =>
+  Object.keys(check).every(
+    (value) => check[value] === "ASC" || check[value] === "DESC"
+  );
+
 export class SelectQueryBuilder<T> extends QueryBuilder<T> {
   private selectColumns: SelectColumn[] = [];
   private selectExpressions: SelectExpression[] = [];
@@ -122,7 +131,7 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
     else this.relationBuilder.join("inner", entity, alias, condition);
     return this;
   }
-  
+
   rightJoin(
     entity: Entity<any>,
     alias: string,
@@ -152,10 +161,14 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
     condition: string
   ): SelectQueryBuilder<T>;
 
-  leftJoinAndSelect(entity: string | Entity<any>, alias: string, condition: string) {
+  leftJoinAndSelect(
+    entity: string | Entity<any>,
+    alias: string,
+    condition: string
+  ) {
     this.selectExpressions.push({
-      expression : `${alias}.*`
-    })
+      expression: `${alias}.*`,
+    });
     if (typeof entity === "string")
       this.relationBuilder.join("left", entity, alias, condition);
     else this.relationBuilder.join("left", entity, alias, condition);
@@ -173,10 +186,14 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
     condition: string
   ): SelectQueryBuilder<T>;
 
-  innerJoinAndSelect(entity: string | Entity<any>, alias: string, condition: string) {
+  innerJoinAndSelect(
+    entity: string | Entity<any>,
+    alias: string,
+    condition: string
+  ) {
     this.selectExpressions.push({
-      expression : `${alias}.*`
-    })
+      expression: `${alias}.*`,
+    });
     if (typeof entity === "string")
       this.relationBuilder.join("inner", entity, alias, condition);
     else this.relationBuilder.join("inner", entity, alias, condition);
@@ -194,19 +211,25 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
     condition: string
   ): SelectQueryBuilder<T>;
 
-  rightJoinAndSelect(entity: string | Entity<any>, alias: string, condition: string) {
+  rightJoinAndSelect(
+    entity: string | Entity<any>,
+    alias: string,
+    condition: string
+  ) {
     this.selectExpressions.push({
-      expression : `${alias}.*`
-    })
+      expression: `${alias}.*`,
+    });
     if (typeof entity === "string")
       this.relationBuilder.join("right", entity, alias, condition);
     else this.relationBuilder.join("right", entity, alias, condition);
     return this;
   }
 
-  where(values: Partial<T> | string, parameters? : ParameterObject): SelectQueryBuilder<T> {
-    if(typeof values === "string")
-      return this.andWhere(values,parameters )
+  where(
+    values: Partial<T> | string,
+    parameters?: ParameterObject
+  ): SelectQueryBuilder<T> {
+    if (typeof values === "string") return this.andWhere(values, parameters);
     this.whereBuilder
       .configure({
         alias: this.alias,
@@ -240,8 +263,15 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
     return this;
   }
 
-  orderBy(column: keyof T, direction: "ASC" | "DESC") {
-    this.orderByBuilder.addOrderBy(column, direction);
+  orderBy(column: keyof T, direction: "ASC" | "DESC"): SelectQueryBuilder<T>;
+  orderBy(orderBys: keyof T | OrderByObject): SelectQueryBuilder<T>;
+
+  orderBy(column: keyof T | OrderByObject, direction?: "ASC" | "DESC") {
+    if (IsOrderBy(column))
+      Object.entries(column).forEach(([column, direction]) => {
+        this.orderByBuilder.addOrderBy(column as keyof T, direction);
+      });
+    else this.orderByBuilder.addOrderBy(column, direction || "DESC");
     return this;
   }
 
@@ -273,7 +303,9 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
       this.metadata.tableName,
       this.alias,
       ...this.metadata.listDatabaseColumns(),
-      ...this.selectExpressions.map(({ alias }) => alias).filter( alias => alias) as Array<string>,
+      ...(this.selectExpressions
+        .map(({ alias }) => alias)
+        .filter((alias) => alias) as Array<string>),
     ];
 
     return aliases;
