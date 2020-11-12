@@ -21,19 +21,6 @@ export const toParameterList = (start: number, length: number) => {
 export const toArray = (
   array: Array<any>,
   formatter?: (input: any) => string
-) : string => {
-  const format = formatter || defaultFormatter;
-  return array.reduce((SQLString: string, value: Primitive, index: number) => {
-    if (index === 0) return SQLString + format(value);
-    return SQLString + ", " + format(value);
-  }, "");
-};
-
-export const joinWhere = (queries: Array<string>) => {
-  return queries
-    .reduce((SQLString: string, value: string, index: number) => {
-      if (index === 0) return SQLString + `${value}`;
-      return SQLString + " and " + `${value}`;
-    }, "")
-    .trim();
+): string => {
+  return array.map(formatter || defaultFormatter).join(", ");
 };

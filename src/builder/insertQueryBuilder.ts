@@ -1,10 +1,14 @@
-import { escapeIdentifier, escapeLiteral } from "../connection/connection";
+import { table } from "console";
+import { ParameterManager } from "../common/ParameterManager";
+import {
+  escapeIdentifier,
+  escapeLiteral,
+  getConnection,
+} from "../connection/connection";
 import { EntityMetadata } from "../metadata/metadata";
 import { toArray } from "../utility/array";
-import {
-  returningColumnsToSQL,
-  SelectColumn,
-} from "../utility/select";
+import { escapeAllIdentifiers, escapeColumns } from "../utility/encoding";
+import { returningColumnsToSQL, SelectColumn } from "../utility/select";
 import { Primitive } from "../utility/types";
 import { QueryBuilder } from "./queryBuilder";
 import { SelectQueryBuilder } from "./selectQueryBuilder";
@@ -13,6 +17,8 @@ export class InsertQueryBuilder<T> extends QueryBuilder<T> {
   private insertValues: Array<Partial<T>> = [];
   private selectQueryBuilder!: SelectQueryBuilder<any>;
   private returningColumns: SelectColumn[] = [];
+
+  
 
   constructor(alias: string, metadata: EntityMetadata) {
     super(alias, metadata);
@@ -30,12 +36,11 @@ export class InsertQueryBuilder<T> extends QueryBuilder<T> {
       .map((value) =>
         this.metadata.listPropertyColumns().map((key) => {
           //@ts-ignore
-          if (value?.[key] as Primitive) {
-            this.parameterCount++;
+          if (value?.[key]) {
             //@ts-ignore
-            this.parameters.push(value?.[key]);
-            return `$${this.parameterCount}`;
-          } else return "DEFAULT";
+            return this.parameterManager.addValue(value?.[key]);
+          } else if (this.metadata.isNullable(key)) return null;
+          else return "DEFAULT";
         })
       )
       .map((row) => toArray(row));
@@ -55,29 +60,27 @@ export class InsertQueryBuilder<T> extends QueryBuilder<T> {
   }
 
   toSQL(): [string, Array<Primitive>] {
-    const schema = escapeIdentifier("farm");
-    const tableName = escapeIdentifier("houses");
+    const schema = this.metadata.schemaName;
+    const tableName = this.metadata.tableName;
 
     const returning = returningColumnsToSQL(this.returningColumns);
 
     if (this.selectQueryBuilder) {
       const [selectSQL, parameters] = this.selectQueryBuilder.toSQL();
-      return [
-        `insert into ${schema}.${tableName} ${selectSQL} returning ${returning}`,
-        parameters,
-      ];
+      return [`insert into ${schema}.${tableName} ${selectSQL}`, parameters];
     }
 
-    const values = toArray(
-      this.metadata.listDatabaseColumns(),
-      (input: Primitive) => escapeLiteral(String(input))
-    );
+    const values = toArray(this.metadata.listDatabaseColumns())
 
     const insertRows = this.toInsertRows();
+    const rawSQLString = `insert into ${schema}.${tableName} (${values}) values ${insertRows}`;
+    const SQLString = escapeAllIdentifiers(rawSQLString, schema, tableName, ...this.metadata.listDatabaseColumns());
 
-    return [
-      `insert into ${schema}.${tableName} values (${values}) values ${insertRows} returning ${returning}`,
-      this.parameters,
-    ];
+    return [SQLString, this.parameterManager.getParameters()];
+  }
+
+  async execute() {
+    const [query, parameters] = this.toSQL();
+    return await getConnection(this.connection).write(query, parameters);
   }
 }

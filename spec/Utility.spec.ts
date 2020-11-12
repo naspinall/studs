@@ -4,7 +4,6 @@ import {
   setTableSchema,
 } from "../src/metadata/metadata";
 import {
-  joinWhere,
   toArray,
   toLowercase,
   toParameterList,
@@ -47,23 +46,6 @@ describe("To Array", () => {
       (input: string) => `$${input}`
     );
     expect(array).toBe("$1, $2, $3, $4, $5");
-  });
-});
-
-describe("Join Where", () => {
-  it("Should Join A Single Statement", () => {
-    const whereString = joinWhere(["id < 5", "name = 'Matt'"]);
-    expect(whereString).toBe("id < 5 and name = 'Matt'");
-  });
-
-  it("Should Join Multiple Statements", () => {
-    const whereString = joinWhere(["name = 'Matt'"]);
-    expect(whereString).toBe("name = 'Matt'");
-  });
-
-  it("Should Join No Statements", () => {
-    const whereString = joinWhere([]);
-    expect(whereString).toBe("");
   });
 });
 

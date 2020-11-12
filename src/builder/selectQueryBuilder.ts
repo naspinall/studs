@@ -32,8 +32,10 @@ const IsOrderBy = (check: any): check is OrderByObject =>
   );
 
 export class SelectQueryBuilder<T> extends QueryBuilder<T> {
-  private selectColumns: SelectColumn[] = [];
-  private selectExpressions: SelectExpression[] = [];
+  private selectColumns: Array<SelectColumn> = [];
+  private selectExpressions: Array<SelectExpression> = [];
+  
+  private withQueries: Array<string> = [];
 
   private whereBuilder = new WhereQueryBuilder<T>();
   private havingBuilder = new HavingQueryBuilder();
@@ -43,14 +45,14 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
   private groupByBuilder = new GroupByQueryBuilder();
   private relationBuilder = new RelationQueryBuilder();
 
-  private parameterManager = new ParameterManager();
+  
 
   constructor(alias: string, metadata: EntityMetadata) {
     super(alias, metadata);
   }
 
   getParamCount() {
-    return this.parameterCount;
+    return this.parameterManager.getParameterCount();
   }
 
   select(...columns: (keyof T)[]): SelectQueryBuilder<T> {
@@ -285,16 +287,11 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
     return this;
   }
 
-  private addFactory(factory: QueryFactory<T>): string {
-    const [query] = factory
-      .configure({
-        count: this.parameterManager.getParameterCount(),
-        alias: this.alias,
-        metadata: this.metadata,
-      })
-      .toSQL();
-    this.parameterManager.merge(factory.getParameterManager());
-    return query;
+  // Order matters for now.
+  with(subQuery: SelectQueryBuilder<T>, alias: string) {
+    this.parameterManager.configure({ count: subQuery.getParamCount() });
+    const [subQuerySQL] = subQuery.toSQL();
+    //this.whereStatements.push(`${alias} as ( ${subQuerySQL} )`);
   }
 
   private getAliases(): Array<string> {

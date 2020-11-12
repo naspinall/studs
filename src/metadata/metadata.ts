@@ -22,6 +22,7 @@ export type MapperValue = {
   name: string;
   type: StudsType;
   databaseType: PostgresType;
+  nullable: boolean;
 };
 
 type Mapper = {
@@ -31,7 +32,9 @@ type Mapper = {
 interface InverseMapper {
   [index: string]: MapperValue;
 }
-
+interface AddColumnOptions {
+  nullable?: boolean;
+}
 export class EntityMetadata {
   tableName!: string;
   schemaName!: string;
@@ -54,18 +57,21 @@ export class EntityMetadata {
     propertyColumn: string,
     databaseColumn: string,
     type: StudsType,
-    databaseType: PostgresType
+    databaseType: PostgresType,
+    options?: AddColumnOptions
   ) {
     this.mapper[propertyColumn] = {
       type,
       name: databaseColumn,
       databaseType,
+      nullable: options?.nullable || false,
     };
 
     this.inverseMapper[databaseColumn] = {
       type,
       name: propertyColumn,
       databaseType,
+      nullable: options?.nullable || false,
     };
   }
 
@@ -115,6 +121,10 @@ export class EntityMetadata {
   getStudsType(column: string) {
     return this.mapper[column].type;
   }
+
+  isNullable(column: string) {
+    return this.mapper[column].nullable;
+  }
 }
 
 export const getMetadata = <T>(entity: Entity<T> | string): EntityMetadata => {
@@ -129,10 +139,17 @@ export const addColumn = (
   databaseColumn: string,
   propertyColumn: string,
   type: StudsType,
-  databaseType: PostgresType
+  databaseType: PostgresType,
+  options?: AddColumnOptions
 ) => {
   if (!metadata[name]) metadata[name] = new EntityMetadata(name);
-  metadata[name].addColumn(propertyColumn, databaseColumn, type, databaseType);
+  metadata[name].addColumn(
+    propertyColumn,
+    databaseColumn,
+    type,
+    databaseType,
+    options
+  );
 };
 
 export const setTableSchema = (

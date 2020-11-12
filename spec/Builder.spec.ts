@@ -137,7 +137,6 @@ describe("Select Builder", () => {
     );
     expect(parameters).toStrictEqual([]);
   });
-  
 
   it("Should create a select query ordering object", () => {
     const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
@@ -151,7 +150,7 @@ describe("Select Builder", () => {
 
   it("Should create a select query ordering object", () => {
     const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
-      .orderBy({ id: "DESC", name : "ASC" })
+      .orderBy({ id: "DESC", name: "ASC" })
       .toSQL();
     expect(query).toBe(
       `select * from "farm"."ducks" as "ducks" order by "id" DESC, "name" ASC`
@@ -355,6 +354,99 @@ describe("Relation Builder", () => {
   });
 });
 
+describe("Insert Builder", () => {
+  it("Should Create An Insert Query", () => {
+    const [query, parameters] = Ducks.createInsertQueryBuilder("ducks")
+      .values({
+        name: "Ron Swanson",
+      })
+      .toSQL();
+
+    expect(query).toBe(
+      `insert into "farm"."ducks" ("id", "name", "breed", "feather_type", "house_id") values (DEFAULT, $1, DEFAULT, DEFAULT, DEFAULT)`
+    );
+    expect(parameters).toStrictEqual(["Ron Swanson"]);
+  });
+
+  it("Should Create An Insert Query For Two Rows", () => {
+    const [query, parameters] = Ducks.createInsertQueryBuilder("ducks")
+      .values([
+        {
+          name: "Ron Swanson",
+        },
+        {
+          name: "John Swanson",
+        },
+      ])
+      .toSQL();
+
+    expect(query).toBe(
+      `insert into "farm"."ducks" ("id", "name", "breed", "feather_type", "house_id") values (DEFAULT, $1, DEFAULT, DEFAULT, DEFAULT), (DEFAULT, $2, DEFAULT, DEFAULT, DEFAULT)`
+    );
+    expect(parameters).toStrictEqual(["Ron Swanson", "John Swanson"]);
+  });
+
+  it("Should Create An Insert Query", () => {
+    const [query, parameters] = Ducks.createInsertQueryBuilder("ducks")
+      .values({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .toSQL();
+
+    expect(query).toBe(
+      `insert into "farm"."ducks" ("id", "name", "breed", "feather_type", "house_id") values (DEFAULT, $1, $2, DEFAULT, DEFAULT)`
+    );
+    expect(parameters).toStrictEqual(["Ron Swanson", "Khaki Campbell"]);
+  });
+});
+
+describe("Update Builder", () => {
+  it("Should Create An Update Query", () => {
+    const [query, parameters] = Ducks.createUpdateQueryBuilder("ducks")
+      .values({
+        name: "Ron Swanson",
+      })
+      .where({ id: 1 })
+      .toSQL();
+
+    expect(query).toBe(
+      `update "farm"."ducks" as "ducks" set "name" = $2 where "ducks"."id" = $1`
+    );
+    expect(parameters).toStrictEqual(["1", "Ron Swanson"]);
+  });
+
+  it("Should Create An Update Query", () => {
+    const [query, parameters] = Ducks.createUpdateQueryBuilder("ducks")
+      .values({
+        name: "Ron Swanson",
+      })
+      .where({ id: 2, breed : "Khaki Campbell" })
+      .toSQL();
+
+    expect(query).toBe(
+      `update "farm"."ducks" as "ducks" set "name" = $3 where "ducks"."id" = $1 and "ducks"."breed" = $2`
+    );
+    expect(parameters).toStrictEqual(["2", "'Khaki Campbell'", "Ron Swanson"]);
+  });
+
+  it("Should Create An Update Query With Another Alias", () => {
+    const [query, parameters] = Ducks.createUpdateQueryBuilder("duckerinos")
+      .values({
+        name: "Ron Swanson",
+      })
+      .where({ id: 2, breed : "Khaki Campbell" })
+      .toSQL();
+
+    expect(query).toBe(
+      `update "farm"."ducks" as "duckerinos" set "name" = $3 where "duckerinos"."id" = $1 and "duckerinos"."breed" = $2`
+    );
+    expect(parameters).toStrictEqual(["2", "'Khaki Campbell'", "Ron Swanson"]);
+  });
+});
+
+
+
 describe("Select Builder Querying Test Database", () => {
   beforeAll(async () => {
     createConnection({
@@ -489,6 +581,55 @@ describe("Select Builder Querying Test Database", () => {
     await Ducks.createSelectQueryBuilder("ducks")
       .addSelect("house.id", "house")
       .rightJoin(House, "house", "ducks.house_id = house.id")
+      .execute();
+  });
+
+  it("Should Create An Insert Query", async () => {
+    await Ducks.createInsertQueryBuilder("ducks")
+      .values({
+        name: "Ron Swanson",
+      })
+      .execute();
+  });
+
+  it("Should Create An Insert Query For Two Rows", async () => {
+    await Ducks.createInsertQueryBuilder("ducks")
+      .values([
+        {
+          name: "Ron Swanson",
+        },
+        {
+          name: "John Swanson",
+        },
+      ])
+      .execute();
+  });
+
+  it("Should Create An Insert Query", async () => {
+    await Ducks.createInsertQueryBuilder("ducks")
+      .values({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .execute();
+  });
+
+  it("Should Create An Update Query With More Than One Value", async () => {
+    await Ducks.createUpdateQueryBuilder("ducks")
+      .values({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .where({ id: 2 })
+      .execute();
+  });
+
+  it("Should Create An Update Query With 1 Value", async () => {
+    await Ducks.createUpdateQueryBuilder("duckerinos")
+      .values({
+        name: "Ron Swanson",
+      })
+      .where({ id: 2, breed : "Khaki Campbell" })
       .execute();
   });
 });

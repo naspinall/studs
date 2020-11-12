@@ -3,7 +3,7 @@ import { NamedParameter, ParameterObject } from "../operators/NamedParameters";
 import {
   OperatorConfiguration,
 } from "../operators/Operator";
-import { joinWhere } from "../utility/array";
+
 import { Primitive } from "../utility/types";
 
 export class HavingQueryBuilder {
@@ -40,7 +40,7 @@ export class HavingQueryBuilder {
     }
 
     return [
-      ` having ${joinWhere(this.havingStatements)}`,
+      ` having ${this.havingStatements.join(" and ")}`,
       this.parameterManager.getParameters(),
     ];
   }

@@ -1,5 +1,5 @@
 import { OperatorConfiguration } from "../operators/Operator";
-import { toParameterList } from "../utility/array";
+import { toArray, toParameterList } from "../utility/array";
 import { Primitive } from "../utility/types";
 
 export class ParameterManager {
@@ -28,8 +28,15 @@ export class ParameterManager {
   };
 
   addList = (values: Array<Primitive>): string => {
+    const SQLString = toArray(values, (input) => {
+      if (input === "DEFAULT") return "DEFAULT";
+      else {
+        this.parameterCount++;
+        return `$${this.parameterCount}`;
+      }
+    });
     // Converting to correct SQL Type
-    const SQLString = `${toParameterList(this.parameterCount, values.length)}`;
+    //const SQLString = `${toParameterList(this.parameterCount, values.length)}`;
     this.parameters.push(...values);
     this.parameterCount += values.length;
     return SQLString;

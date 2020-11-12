@@ -30,7 +30,7 @@ export const toSQLValue = (value: Primitive, type: PostgresType): string => {
     case "text":
       return escapeLiteral(String(value));
     default:
-      throw new Error("Bad TYPE");
+      throw new Error("Bad Type");
   }
 };
 

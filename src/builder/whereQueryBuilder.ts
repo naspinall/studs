@@ -7,7 +7,7 @@ import {
   OperatorConfiguration,
   SelectOperator,
 } from "../operators/Operator";
-import { joinWhere } from "../utility/array";
+
 import { Primitive } from "../utility/types";
 
 export class WhereQueryBuilder<T> {
@@ -88,7 +88,7 @@ export class WhereQueryBuilder<T> {
     }
 
     return [
-      ` where ${joinWhere(this.whereStatements)}`,
+      ` where ${this.whereStatements.join(" and ")}`,
       this.parameterManager.getParameters(),
     ];
   }

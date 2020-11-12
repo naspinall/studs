@@ -4,6 +4,7 @@ import { PostgresType, StudsType } from "../utility/encoding";
 
 export interface ColumnOptions {
   name: string;
+  nullable? : boolean
 }
 
 export const Column = (
@@ -21,7 +22,10 @@ export const Column = (
       options.name,
       String(key),
       studsType,
-      type
+      type,
+      {
+        nullable : options.nullable
+      }
     );
   };
 };
