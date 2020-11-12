@@ -1,3 +1,4 @@
+import { stringify } from "querystring";
 import { escapeIdentifier, escapeLiteral } from "../connection/connection";
 import { EntityMetadata } from "../metadata/metadata";
 import { Primitive } from "./types";
@@ -74,11 +75,22 @@ export const escapeAllIdentifiers = (
   SQLString: string,
   ...identifiers: Array<string>
 ) =>
-  identifiers.reduce(
-    (currentSql: string, identifier: string) =>
-      currentSql.replace(
-        new RegExp(`("|\\b)(${identifier})("|\\b)`, "g"),
-        `${escapeIdentifier(identifier)}`
-      ),
-    SQLString
-  );
+  // Splitting on single quotes to get to prevent string literals in the query from being escaped
+  SQLString.split("'")
+    .map((splitSQL, index) =>
+      // Only escape on odd, queries won't start with a string literal
+      index % 2 === 0
+      // Use regex to replace all the identifiers in SQL
+        ? identifiers.reduce(
+            (currentSQL: string, identifier: string) =>
+              currentSQL.replace(
+                new RegExp(`("|\\b)(${identifier})("|\\b)`, "g"),
+                `${escapeIdentifier(identifier)}`
+              ),
+            splitSQL
+          )
+        // Just returning string literal
+        : splitSQL
+    )
+    // Joining string back together
+    .join("'");

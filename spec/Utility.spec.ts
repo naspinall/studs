@@ -122,6 +122,16 @@ describe("Escape All Identifiers", () => {
     expect(sqlString).toBe('select * from "farm" as "farm"');
   });
 
+  it("Should Escape An Identifier But Not In The String", () => {
+    const sqlString = escapeAllIdentifiers(
+      "select * from farm as farm where name = 'farm' and id = 'farm and id and name'",
+      "farm",
+      "name",
+      "id"
+    );
+    expect(sqlString).toBe(`select * from "farm" as "farm" where "name" = 'farm' and "id" = 'farm and id and name'`);
+  });
+
   it("Should Escape Multiple", () => {
     const sqlString = escapeAllIdentifiers(
       "select farm.id from farm as farm",
