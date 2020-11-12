@@ -67,11 +67,12 @@ describe("Parameter Manager", () => {
     // Expect a parameterized response
     expect(parameter).toBe("$2, $3, $4, $5, $6");
 
+    // Want list set in the parameters
+    expect(parameterManager.getParameters()).toStrictEqual([1, 2, 3, 4, 5]);
+
     // Want a the count to increment
     expect(parameterManager.getParameterCount()).toBe(6);
 
-    // Want list set in the parameters
-    expect(parameterManager.getParameters()).toStrictEqual([1, 2, 3, 4, 5]);
   });
 
   it("Should Merge with Another parameter manager", () => {

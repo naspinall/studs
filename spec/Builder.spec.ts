@@ -421,7 +421,7 @@ describe("Update Builder", () => {
       .values({
         name: "Ron Swanson",
       })
-      .where({ id: 2, breed : "Khaki Campbell" })
+      .where({ id: 2, breed: "Khaki Campbell" })
       .toSQL();
 
     expect(query).toBe(
@@ -435,7 +435,7 @@ describe("Update Builder", () => {
       .values({
         name: "Ron Swanson",
       })
-      .where({ id: 2, breed : "Khaki Campbell" })
+      .where({ id: 2, breed: "Khaki Campbell" })
       .toSQL();
 
     expect(query).toBe(
@@ -445,7 +445,40 @@ describe("Update Builder", () => {
   });
 });
 
+describe("Delete Builder", () => {
+  it("Should Create A Delete Query", () => {
+    const [query, parameters] = Ducks.createDeleteQueryBuilder("ducks")
+      .where({ id: 1 })
+      .toSQL();
 
+    expect(query).toBe(
+      `delete from "farm"."ducks" as "ducks" where "ducks"."id" = $1`
+    );
+    expect(parameters).toStrictEqual(["1"]);
+  });
+
+  it("Should Create An Update Query", () => {
+    const [query, parameters] = Ducks.createDeleteQueryBuilder("ducks")
+      .where({ id: 2, breed: "Khaki Campbell" })
+      .toSQL();
+
+    expect(query).toBe(
+      `delete from "farm"."ducks" as "ducks" where "ducks"."id" = $1 and "ducks"."breed" = $2`
+    );
+    expect(parameters).toStrictEqual(["2", "'Khaki Campbell'"]);
+  });
+
+  it("Should Create An Update Query With Another Alias", () => {
+    const [query, parameters] = Ducks.createDeleteQueryBuilder("duckerinos")
+      .where({ id: 2, breed: "Khaki Campbell" })
+      .toSQL();
+
+    expect(query).toBe(
+      `delete from "farm"."ducks" as "duckerinos" where "duckerinos"."id" = $1 and "duckerinos"."breed" = $2`
+    );
+    expect(parameters).toStrictEqual(["2", "'Khaki Campbell'"]);
+  });
+});
 
 describe("Select Builder Querying Test Database", () => {
   beforeAll(async () => {
@@ -629,7 +662,21 @@ describe("Select Builder Querying Test Database", () => {
       .values({
         name: "Ron Swanson",
       })
-      .where({ id: 2, breed : "Khaki Campbell" })
+      .where({ id: 2, breed: "Khaki Campbell" })
+      .execute();
+  });
+
+  it("Should Create Delete Query", async () => {
+    await Ducks.createInsertQueryBuilder("duckerinos")
+      .values({
+        name: "Delete Me",
+      })
+      .execute();
+
+    await Ducks.createDeleteQueryBuilder("duckerinos")
+      .where({
+        name: "Delete Me",
+      })
       .execute();
   });
 });

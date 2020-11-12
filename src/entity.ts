@@ -1,3 +1,4 @@
+import { DeleteQueryBuilder } from "./builder/deleteQueryBuilder";
 import { InsertQueryBuilder } from "./builder/insertQueryBuilder";
 import { SelectQueryBuilder } from "./builder/selectQueryBuilder";
 import { UpdateQueryBuilder } from "./builder/updateQueryBuilder";
@@ -33,5 +34,12 @@ export class BaseEntity {
   ) {
     const metadata = getMetadata<T>(this.name);
     return new UpdateQueryBuilder<T>(alias || toLowercase(this.name), metadata);
+  }
+  static createDeleteQueryBuilder<T extends BaseEntity>(
+    this: Entity<T>,
+    alias?: string
+  ) {
+    const metadata = getMetadata<T>(this.name);
+    return new DeleteQueryBuilder<T>(alias || toLowercase(this.name), metadata);
   }
 }

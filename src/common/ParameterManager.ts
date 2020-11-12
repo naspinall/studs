@@ -38,7 +38,6 @@ export class ParameterManager {
     // Converting to correct SQL Type
     //const SQLString = `${toParameterList(this.parameterCount, values.length)}`;
     this.parameters.push(...values);
-    this.parameterCount += values.length;
     return SQLString;
   };
 
