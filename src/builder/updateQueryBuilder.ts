@@ -12,17 +12,18 @@ import { escapeAllIdentifiers, escapeColumns } from "../utility/encoding";
 import { returningColumnsToSQL, SelectColumn } from "../utility/select";
 import { Primitive } from "../utility/types";
 import { QueryBuilder } from "./queryBuilder";
+import { ReturningQueryBuilder } from "./returningQueryBuilder";
 import { SelectQueryBuilder } from "./selectQueryBuilder";
 import { WhereQueryBuilder } from "./whereQueryBuilder";
 
 export class UpdateQueryBuilder<T> extends QueryBuilder<T> {
   private updateValues!: Partial<T>;
   private selectQueryBuilder!: SelectQueryBuilder<any>;
-  private returningColumns: SelectColumn[] = [];
 
   private setColumns: Array<string> = [];
 
   private whereBuilder = new WhereQueryBuilder();
+  private returningBuilder = new ReturningQueryBuilder();
 
   constructor(alias: string, metadata: EntityMetadata) {
     super(alias, metadata);
@@ -51,7 +52,7 @@ export class UpdateQueryBuilder<T> extends QueryBuilder<T> {
     return this;
   }
 
-  values(values: Partial<T>) {
+  set(values: Partial<T>) {
     this.updateValues = values;
     this.setColumns = Object.keys(values)
       //@ts-ignore
@@ -62,16 +63,16 @@ export class UpdateQueryBuilder<T> extends QueryBuilder<T> {
 
   private toUpdateRows(): string {
     const rows = this.setColumns.map((key) =>
-    //@ts-ignore
+      //@ts-ignore
       this.parameterManager.addValue(this.updateValues?.[key])
     );
 
     //@ts-ignore
-    return `${toArray(rows)}`;
+    return this.setColumns.length > 1 ? `(${toArray(rows)})` : rows;
   }
 
-  returning() {
-    //this.returningColumns = addSelectColumns(columns, this.metadata);
+  returning(...columns: (keyof T | "*")[]) {
+    this.returningBuilder.returning(columns as Array<string>);
     return this;
   }
 
@@ -79,30 +80,30 @@ export class UpdateQueryBuilder<T> extends QueryBuilder<T> {
     const schema = this.metadata.schemaName;
     const tableName = this.metadata.tableName;
 
-    const returning = returningColumnsToSQL(this.returningColumns);
-
     const whereQuery = this.addFactory(this.whereBuilder);
+    const returningQuery = this.addFactory(this.returningBuilder);
 
     if (this.selectQueryBuilder) {
       const [selectSQL, parameters] = this.selectQueryBuilder.toSQL();
       return [`insert into ${schema}.${tableName} ${selectSQL}`, parameters];
     }
 
-    const set = toArray(this.setColumns);
+    const set =
+      this.setColumns.length > 1
+        ? `(${toArray(this.setColumns)})`
+        : toArray(this.setColumns);
 
     const updateRow = this.toUpdateRows();
     const rawSQLString =
-      this.setColumns.length > 1
-        ? `update ${schema}.${tableName} as ${this.alias} set (${set}) = (${updateRow})` +
-          whereQuery
-        : `update ${schema}.${tableName} as ${this.alias} set ${set} = ${updateRow}` +
-          whereQuery;
+      `update ${schema}.${tableName} as ${this.alias} set ${set} = ${updateRow}` +
+      whereQuery + returningQuery;
     const SQLString = escapeAllIdentifiers(
       rawSQLString,
       schema,
       tableName,
       this.alias,
-      ...this.metadata.listDatabaseColumns()
+      ...this.metadata.listDatabaseColumns(),
+      ...this.metadata.listPropertyColumns()
     );
 
     return [SQLString, this.parameterManager.getParameters()];

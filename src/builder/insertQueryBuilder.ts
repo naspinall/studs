@@ -11,14 +11,14 @@ import { escapeAllIdentifiers, escapeColumns } from "../utility/encoding";
 import { returningColumnsToSQL, SelectColumn } from "../utility/select";
 import { Primitive } from "../utility/types";
 import { QueryBuilder } from "./queryBuilder";
+import { ReturningQueryBuilder } from "./returningQueryBuilder";
 import { SelectQueryBuilder } from "./selectQueryBuilder";
 
 export class InsertQueryBuilder<T> extends QueryBuilder<T> {
   private insertValues: Array<Partial<T>> = [];
   private selectQueryBuilder!: SelectQueryBuilder<any>;
-  private returningColumns: SelectColumn[] = [];
 
-  
+  private returningBuilder = new ReturningQueryBuilder();
 
   constructor(alias: string, metadata: EntityMetadata) {
     super(alias, metadata);
@@ -49,13 +49,13 @@ export class InsertQueryBuilder<T> extends QueryBuilder<T> {
     return toArray(rows, (input: Primitive) => `(${input})`);
   }
 
-  select<K>(qb: SelectQueryBuilder<K>) {
-    this.selectQueryBuilder = qb;
+  returning(...columns: (keyof T | "*")[]) {
+    this.returningBuilder.returning(columns as Array<string>);
     return this;
   }
 
-  returning() {
-    //this.returningColumns = addSelectColumns(columns, this.metadata);
+  select<K>(qb: SelectQueryBuilder<K>) {
+    this.selectQueryBuilder = qb;
     return this;
   }
 
@@ -63,18 +63,26 @@ export class InsertQueryBuilder<T> extends QueryBuilder<T> {
     const schema = this.metadata.schemaName;
     const tableName = this.metadata.tableName;
 
-    const returning = returningColumnsToSQL(this.returningColumns);
+    const returningQuery = this.addFactory(this.returningBuilder);
 
     if (this.selectQueryBuilder) {
       const [selectSQL, parameters] = this.selectQueryBuilder.toSQL();
       return [`insert into ${schema}.${tableName} ${selectSQL}`, parameters];
     }
 
-    const values = toArray(this.metadata.listDatabaseColumns())
+    const values = toArray(this.metadata.listDatabaseColumns());
 
     const insertRows = this.toInsertRows();
-    const rawSQLString = `insert into ${schema}.${tableName} (${values}) values ${insertRows}`;
-    const SQLString = escapeAllIdentifiers(rawSQLString, schema, tableName, ...this.metadata.listDatabaseColumns());
+    const rawSQLString =
+      `insert into ${schema}.${tableName} (${values}) values ${insertRows}` +
+      returningQuery;
+    const SQLString = escapeAllIdentifiers(
+      rawSQLString,
+      schema,
+      tableName,
+      ...this.metadata.listDatabaseColumns(),
+      ...this.metadata.listPropertyColumns()
+    );
 
     return [SQLString, this.parameterManager.getParameters()];
   }

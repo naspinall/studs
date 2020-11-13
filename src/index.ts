@@ -14,15 +14,11 @@ import { Ducks } from "../spec/Ducks";
   });
 
   console.log(
-    Ducks.createSelectQueryBuilder("farm")
-      .select("id", "name")
-      .where({
-        //@ts-ignore
-        id: LessThan(10),
-        //@ts-ignore
-        name: Any(10, 11, 12, 13, 14, 15),
-        sid: "10",
-      })
-      .toSQL()
+    console.log(
+      await Ducks.createInsertQueryBuilder("ducks")
+        .values({ name: "John Johnson" })
+        .returning("*")
+        .execute()
+    )
   );
 })();

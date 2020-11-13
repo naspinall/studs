@@ -50,8 +50,11 @@ export class ParameterManager {
   }
 
   merge(parameterManager: ParameterManager) {
-    this.parameterCount +=
-      parameterManager.getParameterCount() - this.parameterCount;
+    const newCount = parameterManager.getParameterCount();
+    if (newCount === 0) return;
+    this.parameterCount += Math.abs(
+      parameterManager.getParameterCount() - this.parameterCount
+    );
     this.parameters.push(...parameterManager.getParameters());
   }
 }
