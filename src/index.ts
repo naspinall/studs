@@ -1,24 +1,18 @@
 import "reflect-metadata";
-import { createConnection } from "./connection/connection";
-import { Any } from "./operators/Any";
-import { LessThan } from "./operators/LessThan";
-import { Ducks } from "../spec/Ducks";
-(async () => {
-  createConnection({
-    type: "postgres",
-    host: process.env.POSTGRES_HOST,
-    port: Number(process.env.POSTGRES_POST),
-    user: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD,
-    database: process.env.POSTGRES_DB,
-  });
+export * from "./operators/Any";
+export * from "./operators/Between";
+export * from "./operators/Equal";
+export * from "./operators/GreaterThan";
+export * from "./operators/GreaterThanOrEqual";
+export * from "./operators/In";
+export * from "./operators/IsNotNull";
+export * from "./operators/IsNull";
+export * from "./operators/LessThan";
+export * from "./operators/LessThanOrEqual";
+export * from "./operators/NamedParameters";
+export * from "./operators/Not";
+export * from "./operators/Operator";
+export * from "./operators/Or";
+export * from "./operators/Raw";
 
-  console.log(
-    console.log(
-      await Ducks.createInsertQueryBuilder("ducks")
-        .values({ name: "John Johnson" })
-        .returning("*")
-        .execute()
-    )
-  );
-})();
+export * from "./entity";

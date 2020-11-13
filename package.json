@@ -1,11 +1,13 @@
 {
-  "name": "query-builder",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "studs-db",
+  "version": "0.0.1",
+  "description": "A Postgres Query Builder Focusing On Flexibility And Features",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "start": "ts-node -r dotenv/config src/index.ts",
-    "test": "jest ---setupFiles dotenv/config --watchAll"
+    "test": "jest ---setupFiles dotenv/config --watchAll",
+    "build" : "tsc"
   },
   "keywords": [],
   "author": "",

@@ -1,0 +1,13 @@
+node_modules
+.env
+docker*
+TestDatabase.Dockerfile
+jest.config.js
+.vscode
+.github
+coverage
+schema
+.gitignore
+tsconfig.json
+spec
+src
