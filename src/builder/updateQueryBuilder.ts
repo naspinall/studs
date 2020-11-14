@@ -11,6 +11,9 @@ import { ReturningQueryBuilder } from "./returningQueryBuilder";
 import { SelectQueryBuilder } from "./selectQueryBuilder";
 import { WhereQueryBuilder } from "./whereQueryBuilder";
 
+interface UpdateExecuteOptions {
+  transaction?: boolean;
+}
 export class UpdateQueryBuilder<T> extends BaseQueryBuilder<T> {
   private updateValues!: Partial<T>;
   private selectQueryBuilder!: SelectQueryBuilder<any>;
@@ -104,8 +107,9 @@ export class UpdateQueryBuilder<T> extends BaseQueryBuilder<T> {
     return [SQLString, this.parameterManager.getParameters()];
   }
 
-  async execute() {
-    const [query, parameters] = this.toSQL();
-    return await getConnection(this.connection).write(query, parameters);
+  async execute(options? : UpdateExecuteOptions) {
+    const [query, parameters] = this.toSQL()
+    if(options?.transaction === false) return await getConnection(this.connection).write(query, parameters);
+    return await getConnection(this.connection).writeTransaction(query, parameters);
   }
 }

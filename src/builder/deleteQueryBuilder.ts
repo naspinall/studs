@@ -6,6 +6,9 @@ import { Primitive } from "../utility/types";
 import { BaseQueryBuilder } from "./baseQueryBuilder";
 import { WhereQueryBuilder } from "./whereQueryBuilder";
 
+interface DeleteExecuteOptions {
+  transaction?: boolean;
+}
 export class DeleteQueryBuilder<T> extends BaseQueryBuilder<T> {
   private whereBuilder = new WhereQueryBuilder();
 
@@ -61,8 +64,13 @@ export class DeleteQueryBuilder<T> extends BaseQueryBuilder<T> {
     return [SQLString, this.parameterManager.getParameters()];
   }
 
-  async execute() {
+  async execute(options?: DeleteExecuteOptions) {
     const [query, parameters] = this.toSQL();
-    return await getConnection(this.connection).write(query, parameters);
+    if (options?.transaction === false)
+      return await getConnection(this.connection).write(query, parameters);
+    return await getConnection(this.connection).writeTransaction(
+      query,
+      parameters
+    );
   }
 }

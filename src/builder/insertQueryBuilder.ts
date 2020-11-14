@@ -8,6 +8,10 @@ import { OnConflictQueryBuilder } from "./onConflictQueryBuilder";
 import { ReturningQueryBuilder } from "./returningQueryBuilder";
 import { SelectQueryBuilder } from "./selectQueryBuilder";
 
+interface InsertExecuteOptions {
+  transaction?: boolean;
+}
+
 export class InsertQueryBuilder<T> extends BaseQueryBuilder<T> {
   private insertValues: Array<Partial<T>> = [];
   private selectQueryBuilder!: SelectQueryBuilder<any>;
@@ -98,8 +102,9 @@ export class InsertQueryBuilder<T> extends BaseQueryBuilder<T> {
     return [SQLString, this.parameterManager.getParameters()];
   }
 
-  async execute() {
+  async execute(options?: InsertExecuteOptions) {
     const [query, parameters] = this.toSQL();
-    return await getConnection(this.connection).write(query, parameters);
+    if(options?.transaction === false) return await getConnection(this.connection).write(query, parameters);
+    return await getConnection(this.connection).writeTransaction(query, parameters);
   }
 }

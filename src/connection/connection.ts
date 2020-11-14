@@ -2,6 +2,8 @@ import { Client, Pool } from "pg";
 import { Primitive } from "../utility/types";
 import { StudsDefaultLogger, StudsLogger } from "./logger";
 
+const isSelect = /^select/gim;
+
 interface Connections {
   [index: string]: Connection;
 }
@@ -27,8 +29,14 @@ export const createConnection = (configuration: StudsConfiguration) => {
 };
 
 interface Connection {
-  read(query: string, parameters: Array<Primitive>): Promise<Array<any>>;
-  write(query: string, parameters: Array<Primitive>): Promise<Array<any>>;
+  read(query: string, parameters?: Array<Primitive>): Promise<Array<any>>;
+  write(query: string, parameters?: Array<Primitive>): Promise<Array<any>>;
+  writeTransaction(
+    query: string,
+    parameters?: Array<Primitive>
+  ): Promise<Array<any>>;
+  query(query: string, parameters?: Array<Primitive>): Promise<Array<any>>;
+  disconnect(): Promise<void>;
 }
 
 class SingleConnection implements Connection {
@@ -48,7 +56,7 @@ class SingleConnection implements Connection {
       this.logger = configuration.logger || new StudsDefaultLogger();
   }
 
-  async read(query: string, parameters: Array<Primitive>) {
+  async read(query: string, parameters?: Array<Primitive>) {
     const client = await this.pool.connect();
     try {
       this?.logger?.logQuery(query, parameters);
@@ -61,7 +69,7 @@ class SingleConnection implements Connection {
     }
   }
 
-  async write(query: string, parameters: Array<Primitive>) {
+  async write(query: string, parameters?: Array<Primitive>) {
     const client = await this.pool.connect();
     try {
       this?.logger?.logQuery(query, parameters);
@@ -72,6 +80,29 @@ class SingleConnection implements Connection {
     } finally {
       client.release();
     }
+  }
+
+  async writeTransaction(query: string, parameters?: Array<Primitive>) {
+    const client = await this.pool.connect();
+    try {
+      this?.logger?.logQuery(query, parameters);
+      await client.query("BEGIN");
+      const { rows } = await client.query(query, parameters);
+      await client.query("COMMIT");
+      return rows;
+    } catch (error) {
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async query(query: string, parameters?: Array<Primitive>) {
+    return await this.read(query, parameters);
+  }
+
+  async disconnect() {
+    await this.pool.end();
   }
 }
 
@@ -86,10 +117,10 @@ class ReplicaConnection implements Connection {
     this.logger = configuration.logger || new StudsDefaultLogger();
   }
 
-  async read(query: string, parameters: Array<Primitive>) {
+  async read(query: string, parameters?: Array<Primitive>) {
     const client = await this.readerPool.connect();
     try {
-      this?.logger?.logQuery(query, parameters);
+      this?.logger?.logQuery(query, parameters || []);
       const { rows } = await client.query(query, parameters);
       return rows;
     } catch (error) {
@@ -98,10 +129,11 @@ class ReplicaConnection implements Connection {
       client.release();
     }
   }
-  async write(query: string, parameters: Array<Primitive>) {
+
+  async write(query: string, parameters?: Array<Primitive>) {
     const client = await this.writerPool.connect();
     try {
-      this?.logger?.logQuery(query, parameters);
+      this?.logger?.logQuery(query, parameters || []);
       const { rows } = await client.query(query, parameters);
       return rows;
     } catch (error) {
@@ -109,6 +141,31 @@ class ReplicaConnection implements Connection {
     } finally {
       client.release();
     }
+  }
+
+  async writeTransaction(query: string, parameters?: Array<Primitive>) {
+    const client = await this.writerPool.connect();
+    try {
+      this?.logger?.logQuery(query, parameters || []);
+      await client.query("BEGIN");
+      const { rows } = await client.query(query, parameters);
+      await client.query("COMMIT");
+      return rows;
+    } catch (error) {
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async query(query: string, parameters?: Array<Primitive>) {
+    const toReader = isSelect.test(query);
+    if (toReader) return this.read(query, parameters);
+    return this.write(query, parameters);
+  }
+
+  async disconnect() {
+    await Promise.all([this.writerPool.end(), this.readerPool.end()]);
   }
 }
 
@@ -126,9 +183,6 @@ interface StudsConfiguration extends ConnectionConfiguration {
 
 export const getConnection = (connection?: string): Connection =>
   connection ? connections[connection] : connections["default"];
-
-// const connectToDatabase = async () => await client.connect();
-// const disconnectFromDatabase = async () => await client.end();
 
 export const escapeIdentifier = (input: string) =>
   dummyClient.escapeIdentifier(input);

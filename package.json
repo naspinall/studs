@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "start": "ts-node -r dotenv/config src/index.ts",
-    "test": "jest ---setupFiles dotenv/config --watchAll",
+    "test": "jest --setupFiles dotenv/config --watchAll --detectOpenHandles",
+    "test:debug": "jest --setupFiles dotenv/config --detectOpenHandles",
     "build": "tsc"
   },
   "keywords": [

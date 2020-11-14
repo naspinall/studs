@@ -338,4 +338,10 @@ export class SelectQueryBuilder<T> extends BaseQueryBuilder<T> {
     const [query, parameters] = this.toSQL();
     return await getConnection(this.connection).read(query, parameters);
   }
+
+  async getOne(): Promise<T> {
+    const rows = (await this.limit(1).execute()) as Array<T>;
+    const [singleRow] = rows;
+    return singleRow;
+  }
 }

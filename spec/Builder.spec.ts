@@ -9,7 +9,7 @@ import { Ducks } from "./Ducks";
 import { Or } from "../src/operators/Or";
 import { GreaterThan } from "../src/operators/GreaterThan";
 import { Raw } from "../src/operators/Raw";
-import { createConnection } from "../src/connection/connection";
+import { createConnection, getConnection } from "../src/connection/connection";
 import { House } from "./House";
 
 describe("Where Builder", () => {
@@ -902,7 +902,7 @@ describe("Select Builder Querying Test Database", () => {
       })
       .onConflict("DO NOTHING")
       .returning("*")
-      .execute()
+      .execute();
   });
 
   it("Should Create An Insert Query Returning id and featherType", async () => {
@@ -914,6 +914,81 @@ describe("Select Builder Querying Test Database", () => {
       })
       .returning("id", "featherType")
       .execute();
+  });
+
+  it("Should Run Insert In Transaction", async () => {
+    const connection = getConnection();
+    jest.spyOn(connection, "writeTransaction");
+    await Ducks.createQueryBuilder()
+      .insert("ducks")
+      .values({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .returning("id", "featherType")
+      .execute();
+    expect(connection.writeTransaction).toBeCalled();
+  });
+
+  it("Should Run Insert Without Transaction", async () => {
+    const connection = getConnection();
+    jest.spyOn(connection, "write");
+    await Ducks.createQueryBuilder()
+      .insert("ducks")
+      .values({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .returning("id", "featherType")
+      .execute({ transaction: false });
+    expect(connection.write).toBeCalled();
+  });
+
+  it("Should Run Update In Transaction", async () => {
+    const connection = getConnection();
+    jest.spyOn(connection, "writeTransaction");
+    await Ducks.createQueryBuilder()
+      .update("ducks")
+      .set({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .where({ id: 1 })
+      .returning("id", "featherType")
+      .execute();
+    expect(connection.writeTransaction).toBeCalled();
+  });
+
+  it("Should Run Update Without Transaction", async () => {
+    const connection = getConnection();
+    jest.spyOn(connection, "write");
+    await Ducks.createQueryBuilder()
+      .update("ducks")
+      .set({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .where({ id: 1 })
+      .returning("id", "featherType")
+      .execute({ transaction: false });
+    expect(connection.write).toBeCalled();
+  });
+
+  it("Should Run Delete In Transaction", async () => {
+    const connection = getConnection();
+    jest.spyOn(connection, "writeTransaction");
+    await Ducks.createQueryBuilder().delete("ducks").where({ id: 1 }).execute();
+    expect(connection.writeTransaction).toBeCalled();
+  });
+
+  it("Should Run Delete Without Transaction", async () => {
+    const connection = getConnection();
+    jest.spyOn(connection, "write");
+    await Ducks.createQueryBuilder()
+      .delete("ducks")
+      .where({ id: 1 })
+      .execute({ transaction: false });
+    expect(connection.write).toBeCalled();
   });
 
   it("Should Create An Update Query With More Than One Value", async () => {
@@ -962,5 +1037,30 @@ describe("Select Builder Querying Test Database", () => {
         name: "Delete Me",
       })
       .execute();
+  });
+
+  it("Should Get One", async () => {
+    const [duck] = await Ducks.createQueryBuilder()
+      .insert("ducks")
+      .values({
+        name: "Just One",
+      })
+      .returning("id", "name")
+      .execute();
+
+    const singleDuck = await Ducks.createQueryBuilder()
+      .select("duckerinos")
+      .where({
+        id: duck.id,
+      })
+      .getOne();
+
+    expect(singleDuck.id).toBe(duck.id);
+    expect(singleDuck.name).toBe(duck.name);
+  });
+
+  afterAll(async () => {
+    await Ducks.truncate();
+    await getConnection().disconnect();
   });
 });
