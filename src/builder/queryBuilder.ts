@@ -1,9 +1,15 @@
 import { Client } from "pg";
 import { ParameterManager } from "../common/ParameterManager";
-import { EntityMetadata } from "../metadata/metadata";
+import { Entity } from "../entity";
+import { EntityMetadata, getMetadata } from "../metadata/metadata";
 import { OperatorConfiguration } from "../operators/Operator";
+import { toLowercase } from "../utility/array";
 
 import { Primitive } from "../utility/types";
+import { DeleteQueryBuilder } from "./deleteQueryBuilder";
+import { InsertQueryBuilder } from "./insertQueryBuilder";
+import { SelectQueryBuilder } from "./selectQueryBuilder";
+import { UpdateQueryBuilder } from "./updateQueryBuilder";
 
 export interface QueryFactory<T> {
   getParameterManager(): ParameterManager;
@@ -12,26 +18,38 @@ export interface QueryFactory<T> {
 }
 
 export class QueryBuilder<T> {
-  protected metadata: EntityMetadata;
-
-  protected alias!: string;
-  protected connection!: string;
-  protected parameterManager = new ParameterManager();
-
-  constructor(alias: string, metadata: EntityMetadata) {
-    this.alias = alias;
-    this.metadata = metadata;
+  private entity: Entity<T>;
+  constructor(entity: Entity<T>) {
+    this.entity = entity;
   }
 
-  protected addFactory(factory: QueryFactory<T>): string {
-    const [query] = factory
-      .configure({
-        count: this.parameterManager.getParameterCount(),
-        alias: this.alias,
-        metadata: this.metadata,
-      })
-      .toSQL();
-    this.parameterManager.merge(factory.getParameterManager());
-    return query;
+  select(alias?: string): SelectQueryBuilder<T> {
+    const metadata = getMetadata<T>(this.entity.name);
+    return new SelectQueryBuilder<T>(
+      alias || toLowercase(this.entity.name),
+      metadata
+    );
+  }
+  insert(alias?: string): InsertQueryBuilder<T> {
+    const metadata = getMetadata<T>(this.entity.name);
+    return new InsertQueryBuilder<T>(
+      alias || toLowercase(this.entity.name),
+      metadata
+    );
+  }
+  update(alias?: string): UpdateQueryBuilder<T> {
+    const metadata = getMetadata<T>(this.entity.name);
+    return new UpdateQueryBuilder<T>(
+      alias || toLowercase(this.entity.name),
+      metadata
+    );
+  }
+
+  delete(alias?: string): DeleteQueryBuilder<T> {
+    const metadata = getMetadata<T>(this.entity.name);
+    return new DeleteQueryBuilder<T>(
+      alias || toLowercase(this.entity.name),
+      metadata
+    );
   }
 }

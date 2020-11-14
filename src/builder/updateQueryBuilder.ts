@@ -1,22 +1,17 @@
-import { table } from "console";
-import { ParameterManager } from "../common/ParameterManager";
 import {
-  escapeIdentifier,
-  escapeLiteral,
   getConnection,
 } from "../connection/connection";
 import { EntityMetadata } from "../metadata/metadata";
 import { ParameterObject } from "../operators/NamedParameters";
 import { toArray } from "../utility/array";
-import { escapeAllIdentifiers, escapeColumns } from "../utility/encoding";
-import { returningColumnsToSQL, SelectColumn } from "../utility/select";
+import { escapeAllIdentifiers } from "../utility/encoding";
 import { Primitive } from "../utility/types";
-import { QueryBuilder } from "./queryBuilder";
+import { BaseQueryBuilder } from "./baseQueryBuilder";
 import { ReturningQueryBuilder } from "./returningQueryBuilder";
 import { SelectQueryBuilder } from "./selectQueryBuilder";
 import { WhereQueryBuilder } from "./whereQueryBuilder";
 
-export class UpdateQueryBuilder<T> extends QueryBuilder<T> {
+export class UpdateQueryBuilder<T> extends BaseQueryBuilder<T> {
   private updateValues!: Partial<T>;
   private selectQueryBuilder!: SelectQueryBuilder<any>;
 

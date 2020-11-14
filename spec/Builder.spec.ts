@@ -123,13 +123,16 @@ describe("Select Builder", () => {
   });
 
   it("Should create a select query", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks").toSQL();
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
+      .toSQL();
     expect(query).toBe(`select * from "farm"."ducks" as "ducks"`);
     expect(parameters).toStrictEqual([]);
   });
 
   it("Should create a select query ordering", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .orderBy("id", "DESC")
       .toSQL();
     expect(query).toBe(
@@ -139,7 +142,8 @@ describe("Select Builder", () => {
   });
 
   it("Should create a select query ordering object", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .orderBy({ id: "DESC" })
       .toSQL();
     expect(query).toBe(
@@ -149,7 +153,8 @@ describe("Select Builder", () => {
   });
 
   it("Should create a select query ordering object", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .orderBy({ id: "DESC", name: "ASC" })
       .toSQL();
     expect(query).toBe(
@@ -159,7 +164,8 @@ describe("Select Builder", () => {
   });
 
   it("Should create a select query with a limit", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .limit(100)
       .toSQL();
     expect(query).toBe(`select * from "farm"."ducks" as "ducks" limit $1`);
@@ -167,7 +173,8 @@ describe("Select Builder", () => {
   });
 
   it("Should create a select query with a group by", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .groupBy("ducks.id")
       .toSQL();
     expect(query).toBe(
@@ -177,7 +184,8 @@ describe("Select Builder", () => {
   });
 
   it("Should create a select query with a group by", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .groupBy("ducks.id")
       .toSQL();
     expect(query).toBe(
@@ -187,7 +195,8 @@ describe("Select Builder", () => {
   });
 
   it("Should create a select query with a group by and a having", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .groupBy("ducks.id")
       .having("ducks.id > :value", { value: 1 })
       .having("ducks.name = :value", { value: "Mundungus Fletcher" })
@@ -199,7 +208,8 @@ describe("Select Builder", () => {
   });
 
   it("Should create a select query with multiple group bys", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .groupBy("ducks.id", "ducks.name")
       .toSQL();
     expect(query).toBe(
@@ -209,7 +219,8 @@ describe("Select Builder", () => {
   });
 
   it("Should create a select query with an offset", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .offset(100)
       .toSQL();
     expect(query).toBe(`select * from "farm"."ducks" as "ducks" offset $1`);
@@ -217,7 +228,8 @@ describe("Select Builder", () => {
   });
 
   it("Should create a select query with an offset and limit", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .offset(100)
       .limit(100)
       .toSQL();
@@ -228,7 +240,8 @@ describe("Select Builder", () => {
   });
 
   it("Should create a select query with columns", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .select("id", "featherType")
       .toSQL();
     expect(query).toBe(
@@ -238,7 +251,8 @@ describe("Select Builder", () => {
   });
 
   it("Should create a select query with where", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .where({
         id: 1,
         name: "Mundugus Fletcher",
@@ -251,7 +265,8 @@ describe("Select Builder", () => {
   });
 
   it("Should create a select query with a named parameter where", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .where("ducks.id <> :value", { value: 1 })
       .toSQL();
     expect(query).toBe(
@@ -263,7 +278,8 @@ describe("Select Builder", () => {
 
 describe("Relation Builder", () => {
   it("Should Build A Left Join ", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .leftJoin("farm.house", "house", "ducks.houseId = house.id")
       .toSQL();
 
@@ -273,7 +289,8 @@ describe("Relation Builder", () => {
   });
 
   it("Should Build A Left Join And Select", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .leftJoinAndSelect("farm.house", "house", "ducks.houseId = house.id")
       .toSQL();
 
@@ -283,7 +300,8 @@ describe("Relation Builder", () => {
   });
 
   it("Should Build A Left Join And Select From Join", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .addSelect("ducks.id", "id")
       .leftJoin("farm.house", "house", "ducks.houseId = house.id")
       .toSQL();
@@ -294,7 +312,8 @@ describe("Relation Builder", () => {
   });
 
   it("Should Build An Inner Join", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .innerJoin("farm.house", "house", "ducks.houseId = house.id")
       .toSQL();
 
@@ -304,7 +323,8 @@ describe("Relation Builder", () => {
   });
 
   it("Should Build An Inner Join And Select", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .innerJoinAndSelect("farm.house", "house", "ducks.houseId = house.id")
       .toSQL();
 
@@ -314,7 +334,8 @@ describe("Relation Builder", () => {
   });
 
   it("Should Build A Right Join", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .rightJoin("farm.house", "house", "ducks.houseId = house.id")
       .toSQL();
 
@@ -324,7 +345,8 @@ describe("Relation Builder", () => {
   });
 
   it("Should Build A Right Join And Select", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .rightJoinAndSelect("farm.house", "house", "ducks.houseId = house.id")
       .toSQL();
 
@@ -334,7 +356,8 @@ describe("Relation Builder", () => {
   });
 
   it("Should Build A Left Join With Two Entities", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .leftJoin(House, "house", "ducks.houseId = house.id")
       .toSQL();
 
@@ -344,7 +367,8 @@ describe("Relation Builder", () => {
   });
 
   it("Should Build A Right Join With Two Entities", () => {
-    const [query, parameters] = Ducks.createSelectQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
       .rightJoin(House, "house", "ducks.houseId = house.id")
       .toSQL();
 
@@ -356,7 +380,8 @@ describe("Relation Builder", () => {
 
 describe("Insert Builder", () => {
   it("Should Create An Insert Query", () => {
-    const [query, parameters] = Ducks.createInsertQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .insert("ducks")
       .values({
         name: "Ron Swanson",
       })
@@ -369,7 +394,8 @@ describe("Insert Builder", () => {
   });
 
   it("Should Create An Insert Query For Two Rows", () => {
-    const [query, parameters] = Ducks.createInsertQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .insert("ducks")
       .values([
         {
           name: "Ron Swanson",
@@ -387,7 +413,8 @@ describe("Insert Builder", () => {
   });
 
   it("Should Create An Insert Query", () => {
-    const [query, parameters] = Ducks.createInsertQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .insert("ducks")
       .values({
         name: "Ron Swanson",
         breed: "Khaki Campbell",
@@ -401,7 +428,8 @@ describe("Insert Builder", () => {
   });
 
   it("Should Create An Insert Query Returning All", () => {
-    const [query, parameters] = Ducks.createInsertQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .insert("ducks")
       .values({
         name: "Ron Swanson",
         breed: "Khaki Campbell",
@@ -416,7 +444,8 @@ describe("Insert Builder", () => {
   });
 
   it("Should Create An Insert Query Returning id", () => {
-    const [query, parameters] = Ducks.createInsertQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .insert("ducks")
       .values({
         name: "Ron Swanson",
         breed: "Khaki Campbell",
@@ -431,7 +460,8 @@ describe("Insert Builder", () => {
   });
 
   it("Should Create An Insert Query Returning id and featherType", () => {
-    const [query, parameters] = Ducks.createInsertQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .insert("ducks")
       .values({
         name: "Ron Swanson",
         breed: "Khaki Campbell",
@@ -448,7 +478,8 @@ describe("Insert Builder", () => {
 
 describe("Update Builder", () => {
   it("Should Create An Update Query", () => {
-    const [query, parameters] = Ducks.createUpdateQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .update("ducks")
       .set({
         name: "Ron Swanson",
       })
@@ -462,7 +493,8 @@ describe("Update Builder", () => {
   });
 
   it("Should Create An Update Query", () => {
-    const [query, parameters] = Ducks.createUpdateQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .update("ducks")
       .set({
         name: "Ron Swanson",
       })
@@ -476,7 +508,8 @@ describe("Update Builder", () => {
   });
 
   it("Should Create An Update Query With Another Alias", () => {
-    const [query, parameters] = Ducks.createUpdateQueryBuilder("duckerinos")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .update("duckerinos")
       .set({
         name: "Ron Swanson",
       })
@@ -490,7 +523,8 @@ describe("Update Builder", () => {
   });
 
   it("Should Create An Update Query Returning Everything", () => {
-    const [query, parameters] = Ducks.createUpdateQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .update("ducks")
       .set({ name: "Ron Swanson" })
       .where({ id: 2, breed: "Khaki Campbell" })
       .returning("*")
@@ -503,7 +537,8 @@ describe("Update Builder", () => {
   });
 
   it("Should Create An Update Query Returning id", () => {
-    const [query, parameters] = Ducks.createUpdateQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .update("ducks")
       .set({ name: "Ron Swanson" })
       .where({ id: 2, breed: "Khaki Campbell" })
       .returning("id")
@@ -516,7 +551,8 @@ describe("Update Builder", () => {
   });
 
   it("Should Create An Update Query Returning multiple values", () => {
-    const [query, parameters] = Ducks.createUpdateQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .update("ducks")
       .set({ name: "Ron Swanson" })
       .where({ id: 2, breed: "Khaki Campbell" })
       .returning("id", "featherType")
@@ -531,7 +567,8 @@ describe("Update Builder", () => {
 
 describe("Delete Builder", () => {
   it("Should Create A Delete Query", () => {
-    const [query, parameters] = Ducks.createDeleteQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .delete("ducks")
       .where({ id: 1 })
       .toSQL();
 
@@ -542,7 +579,8 @@ describe("Delete Builder", () => {
   });
 
   it("Should Create An Delete Query", () => {
-    const [query, parameters] = Ducks.createDeleteQueryBuilder("ducks")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .delete("ducks")
       .where({ id: 2, breed: "Khaki Campbell" })
       .toSQL();
 
@@ -553,7 +591,8 @@ describe("Delete Builder", () => {
   });
 
   it("Should Create An Delete Query With Another Alias", () => {
-    const [query, parameters] = Ducks.createDeleteQueryBuilder("duckerinos")
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .delete("duckerinos")
       .where({ id: 2, breed: "Khaki Campbell" })
       .toSQL();
 
@@ -582,37 +621,42 @@ describe("Select Builder Querying Test Database", () => {
   });
 
   it("Should create a select query", async () => {
-    const ducks = await Ducks.createSelectQueryBuilder("ducks")
+    const ducks = await Ducks.createQueryBuilder()
+      .select("ducks")
       .select("id")
       .execute();
   });
 
   it("Should create a select query ordering", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .orderBy("id", "DESC")
       .execute();
   });
 
   it("Should create a select query with a limit", async () => {
-    await Ducks.createSelectQueryBuilder("ducks").limit(100).execute();
+    await Ducks.createQueryBuilder().select("ducks").limit(100).execute();
   });
 
   it("Should create a select query with a group by", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .select("id")
       .groupBy("ducks.id")
       .execute();
   });
 
   it("Should create a select query with a group by", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .select("id")
       .groupBy("ducks.id")
       .execute();
   });
 
   it("Should create a select query with a group by and a having", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .select("id", "name")
       .groupBy("ducks.id", "ducks.name")
       .having("ducks.id > :value", { value: 1 })
@@ -621,31 +665,35 @@ describe("Select Builder Querying Test Database", () => {
   });
 
   it("Should create a select query with multiple group bys", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .select("id", "name")
       .groupBy("ducks.id", "ducks.name")
       .execute();
   });
 
   it("Should create a select query with an offset", async () => {
-    await Ducks.createSelectQueryBuilder("ducks").offset(100).execute();
+    await Ducks.createQueryBuilder().select("ducks").offset(100).execute();
   });
 
   it("Should create a select query with an offset and limit", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .offset(100)
       .limit(100)
       .execute();
   });
 
   it("Should create a select query with columns", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .select("id", "featherType")
       .execute();
   });
 
   it("Should create a select query with where", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .where({
         id: 1,
         name: "Mundugus Fletcher",
@@ -654,55 +702,63 @@ describe("Select Builder Querying Test Database", () => {
   });
 
   it("Should Build A Left Join ", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .leftJoin("farm.house", "house", "ducks.house_id = house.id")
       .execute();
   });
 
   it("Should Build A Left Join ", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .leftJoin("farm.house", "house", "ducks.house_id = house.id")
       .addSelect("house.id", "houseId")
       .execute();
   });
 
   it("Should Build A Left Join With An Entity", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .addSelect("house.id", "house")
       .leftJoin(House, "house", "ducks.house_id = house.id")
       .execute();
   });
 
   it("Should Build An Inner Join", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .addSelect("house.id", "house")
       .innerJoin("farm.house", "house", "ducks.house_id = house.id")
       .execute();
   });
 
   it("Should Build An Inner Join", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .addSelect("house.id", "house")
       .innerJoin(House, "house", "ducks.house_id = house.id")
       .execute();
   });
 
   it("Should Build A Right Join", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .addSelect("house.id", "house")
       .rightJoin("farm.house", "house", "ducks.house_id = house.id")
       .execute();
   });
 
   it("Should Build A Right Join", async () => {
-    await Ducks.createSelectQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .select("ducks")
       .addSelect("house.id", "house")
       .rightJoin(House, "house", "ducks.house_id = house.id")
       .execute();
   });
 
   it("Should Create An Insert Query", async () => {
-    await Ducks.createInsertQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .insert("ducks")
       .values({
         name: "Ron Swanson",
       })
@@ -710,7 +766,8 @@ describe("Select Builder Querying Test Database", () => {
   });
 
   it("Should Create An Insert Query For Two Rows", async () => {
-    await Ducks.createInsertQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .insert("ducks")
       .values([
         {
           name: "Ron Swanson",
@@ -723,7 +780,8 @@ describe("Select Builder Querying Test Database", () => {
   });
 
   it("Should Create An Insert Query", async () => {
-    await Ducks.createInsertQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .insert("ducks")
       .values({
         name: "Ron Swanson",
         breed: "Khaki Campbell",
@@ -732,7 +790,8 @@ describe("Select Builder Querying Test Database", () => {
   });
 
   it("Should Create An Insert Query Returning All", async () => {
-    await Ducks.createInsertQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .insert("ducks")
       .values({
         name: "Ron Swanson",
         breed: "Khaki Campbell",
@@ -742,7 +801,8 @@ describe("Select Builder Querying Test Database", () => {
   });
 
   it("Should Create An Insert Query Returning id", async () => {
-    await Ducks.createInsertQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .insert("ducks")
       .values({
         name: "Ron Swanson",
         breed: "Khaki Campbell",
@@ -752,7 +812,8 @@ describe("Select Builder Querying Test Database", () => {
   });
 
   it("Should Create An Insert Query Returning id and featherType", async () => {
-    await Ducks.createInsertQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .insert("ducks")
       .values({
         name: "Ron Swanson",
         breed: "Khaki Campbell",
@@ -762,7 +823,8 @@ describe("Select Builder Querying Test Database", () => {
   });
 
   it("Should Create An Update Query With More Than One Value", async () => {
-    await Ducks.createUpdateQueryBuilder("ducks")
+    await Ducks.createQueryBuilder()
+      .update("ducks")
       .set({
         name: "Ron Swanson",
         breed: "Khaki Campbell",
@@ -772,7 +834,8 @@ describe("Select Builder Querying Test Database", () => {
   });
 
   it("Should Create An Update Query With 1 Value", async () => {
-    await Ducks.createUpdateQueryBuilder("duckerinos")
+    await Ducks.createQueryBuilder()
+      .update("duckerinos")
       .set({
         name: "Ron Swanson",
       })
@@ -781,7 +844,8 @@ describe("Select Builder Querying Test Database", () => {
   });
 
   it("Should Create An Update Query With 1 Value Returning Everything", async () => {
-    await Ducks.createUpdateQueryBuilder("duckerinos")
+    await Ducks.createQueryBuilder()
+      .update("duckerinos")
       .set({
         name: "Ron Swanson",
       })
@@ -791,13 +855,15 @@ describe("Select Builder Querying Test Database", () => {
   });
 
   it("Should Create Delete Query", async () => {
-    await Ducks.createInsertQueryBuilder("duckerinos")
+    await Ducks.createQueryBuilder()
+      .insert("duckerinos")
       .values({
         name: "Delete Me",
       })
       .execute();
 
-    await Ducks.createDeleteQueryBuilder("duckerinos")
+    await Ducks.createQueryBuilder()
+      .delete("duckerinos")
       .where({
         name: "Delete Me",
       })

@@ -3,10 +3,10 @@ import { EntityMetadata } from "../metadata/metadata";
 import { ParameterObject } from "../operators/NamedParameters";
 import { escapeAllIdentifiers } from "../utility/encoding";
 import { Primitive } from "../utility/types";
-import { QueryBuilder } from "./queryBuilder";
+import { BaseQueryBuilder } from "./baseQueryBuilder";
 import { WhereQueryBuilder } from "./whereQueryBuilder";
 
-export class DeleteQueryBuilder<T> extends QueryBuilder<T> {
+export class DeleteQueryBuilder<T> extends BaseQueryBuilder<T> {
   private whereBuilder = new WhereQueryBuilder();
 
   constructor(alias: string, metadata: EntityMetadata) {

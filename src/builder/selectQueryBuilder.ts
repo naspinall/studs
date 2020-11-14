@@ -1,4 +1,3 @@
-import { ParameterManager } from "../common/ParameterManager";
 import { getConnection } from "../connection/connection";
 import { Entity } from "../entity";
 import { EntityMetadata } from "../metadata/metadata";
@@ -13,7 +12,7 @@ import { HavingQueryBuilder } from "./havingQueryBuilder";
 import { LimitQueryBuilder } from "./limitQueryBuilder";
 import { OffsetQueryBuilder } from "./offsetQueryBuilder";
 import { OrderByQueryBuilder } from "./orderByQueryBuilder";
-import { QueryBuilder, QueryFactory } from "./queryBuilder";
+import { BaseQueryBuilder } from "./baseQueryBuilder";
 import { RelationQueryBuilder } from "./relationQueryBuilder";
 import { WhereQueryBuilder } from "./whereQueryBuilder";
 
@@ -31,11 +30,9 @@ const IsOrderBy = (check: any): check is OrderByObject =>
     (value) => check[value] === "ASC" || check[value] === "DESC"
   );
 
-export class SelectQueryBuilder<T> extends QueryBuilder<T> {
+export class SelectQueryBuilder<T> extends BaseQueryBuilder<T> {
   private selectColumns: Array<SelectColumn> = [];
   private selectExpressions: Array<SelectExpression> = [];
-  
-  private withQueries: Array<string> = [];
 
   private whereBuilder = new WhereQueryBuilder<T>();
   private havingBuilder = new HavingQueryBuilder();
@@ -44,8 +41,6 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
   private orderByBuilder = new OrderByQueryBuilder<T>();
   private groupByBuilder = new GroupByQueryBuilder();
   private relationBuilder = new RelationQueryBuilder();
-
-  
 
   constructor(alias: string, metadata: EntityMetadata) {
     super(alias, metadata);
@@ -288,9 +283,9 @@ export class SelectQueryBuilder<T> extends QueryBuilder<T> {
   }
 
   // Order matters for now.
-  with(subQuery: SelectQueryBuilder<T>, alias: string) {
+  with(subQuery: SelectQueryBuilder<T>) {
     this.parameterManager.configure({ count: subQuery.getParamCount() });
-    const [subQuerySQL] = subQuery.toSQL();
+    const [] = subQuery.toSQL();
     //this.whereStatements.push(`${alias} as ( ${subQuerySQL} )`);
   }
 

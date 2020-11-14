@@ -10,11 +10,11 @@ import { toArray } from "../utility/array";
 import { escapeAllIdentifiers, escapeColumns } from "../utility/encoding";
 import { returningColumnsToSQL, SelectColumn } from "../utility/select";
 import { Primitive } from "../utility/types";
-import { QueryBuilder } from "./queryBuilder";
+import { BaseQueryBuilder } from "./baseQueryBuilder";
 import { ReturningQueryBuilder } from "./returningQueryBuilder";
 import { SelectQueryBuilder } from "./selectQueryBuilder";
 
-export class InsertQueryBuilder<T> extends QueryBuilder<T> {
+export class InsertQueryBuilder<T> extends BaseQueryBuilder<T> {
   private insertValues: Array<Partial<T>> = [];
   private selectQueryBuilder!: SelectQueryBuilder<any>;
 
