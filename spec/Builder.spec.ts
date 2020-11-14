@@ -474,6 +474,55 @@ describe("Insert Builder", () => {
     );
     expect(parameters).toStrictEqual(["Ron Swanson", "Khaki Campbell"]);
   });
+
+  it("Should Create An Upsert Query", () => {
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .insert("ducks")
+      .values({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .upsertOn("id")
+      .toSQL();
+
+    expect(query).toBe(
+      `insert into "farm"."ducks" ("id", "name", "breed", "feather_type", "house_id") values (DEFAULT, $1, $2, DEFAULT, DEFAULT) on conflict ("id") do update set "id" = EXCLUDED."id", "name" = EXCLUDED."name", "breed" = EXCLUDED."breed", "feather_type" = EXCLUDED."feather_type", "house_id" = EXCLUDED."house_id"`
+    );
+    expect(parameters).toStrictEqual(["Ron Swanson", "Khaki Campbell"]);
+  });
+
+  it("Should Create An Insert Query With A Conflict Clause", () => {
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .insert("ducks")
+      .values({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .onConflict("DO NOTHING")
+      .toSQL();
+
+    expect(query).toBe(
+      `insert into "farm"."ducks" ("id", "name", "breed", "feather_type", "house_id") values (DEFAULT, $1, $2, DEFAULT, DEFAULT) on conflict DO NOTHING`
+    );
+    expect(parameters).toStrictEqual(["Ron Swanson", "Khaki Campbell"]);
+  });
+
+  it("Should Create An Insert Query With A Conflict Clause And Returning All", () => {
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .insert("ducks")
+      .values({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .onConflict("DO NOTHING")
+      .returning("*")
+      .toSQL();
+
+    expect(query).toBe(
+      `insert into "farm"."ducks" ("id", "name", "breed", "feather_type", "house_id") values (DEFAULT, $1, $2, DEFAULT, DEFAULT) on conflict DO NOTHING returning *`
+    );
+    expect(parameters).toStrictEqual(["Ron Swanson", "Khaki Campbell"]);
+  });
 });
 
 describe("Update Builder", () => {
@@ -809,6 +858,51 @@ describe("Select Builder Querying Test Database", () => {
       })
       .returning("id")
       .execute();
+  });
+
+  it("Should Create An Upsert Query", async () => {
+    await Ducks.createQueryBuilder()
+      .insert("ducks")
+      .values({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .upsertOn("id")
+      .execute();
+  });
+
+  it("Should Create An Upsert Query", async () => {
+    await Ducks.createQueryBuilder()
+      .insert("ducks")
+      .values({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .upsertOn("id")
+      .execute();
+  });
+
+  it("Should Create An Insert Query With A Conflict Cause", async () => {
+    await Ducks.createQueryBuilder()
+      .insert("ducks")
+      .values({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .onConflict("DO NOTHING")
+      .execute();
+  });
+
+  it("Should Create An Insert Query With A Conflict Clause And Returning All", async () => {
+    await Ducks.createQueryBuilder()
+      .insert("ducks")
+      .values({
+        name: "Ron Swanson",
+        breed: "Khaki Campbell",
+      })
+      .onConflict("DO NOTHING")
+      .returning("*")
+      .execute()
   });
 
   it("Should Create An Insert Query Returning id and featherType", async () => {

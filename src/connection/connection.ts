@@ -1,5 +1,6 @@
 import { Client, Pool } from "pg";
 import { Primitive } from "../utility/types";
+import { StudsDefaultLogger, StudsLogger } from "./logger";
 
 interface Connections {
   [index: string]: Connection;
@@ -32,6 +33,7 @@ interface Connection {
 
 class SingleConnection implements Connection {
   private pool!: Pool;
+  private logger?: StudsLogger;
 
   constructor(configuration: StudsConfiguration) {
     this.pool = new Pool({
@@ -41,15 +43,15 @@ class SingleConnection implements Connection {
       password: configuration.password,
       database: configuration.database,
     });
+
+    if (configuration.log)
+      this.logger = configuration.logger || new StudsDefaultLogger();
   }
 
   async read(query: string, parameters: Array<Primitive>) {
     const client = await this.pool.connect();
     try {
-      console.log({
-        query,
-        parameters
-      })
+      this?.logger?.logQuery(query, parameters);
       const { rows } = await client.query(query, parameters);
       return rows;
     } catch (error) {
@@ -62,6 +64,7 @@ class SingleConnection implements Connection {
   async write(query: string, parameters: Array<Primitive>) {
     const client = await this.pool.connect();
     try {
+      this?.logger?.logQuery(query, parameters);
       const { rows } = await client.query(query, parameters);
       return rows;
     } catch (error) {
@@ -75,15 +78,18 @@ class SingleConnection implements Connection {
 class ReplicaConnection implements Connection {
   private readerPool!: Pool;
   private writerPool!: Pool;
+  private logger?: StudsLogger;
 
   constructor(configuration: StudsConfiguration) {
     this.readerPool = new Pool(configuration?.replication?.reader);
     this.writerPool = new Pool(configuration?.replication?.writer);
+    this.logger = configuration.logger || new StudsDefaultLogger();
   }
 
   async read(query: string, parameters: Array<Primitive>) {
     const client = await this.readerPool.connect();
     try {
+      this?.logger?.logQuery(query, parameters);
       const { rows } = await client.query(query, parameters);
       return rows;
     } catch (error) {
@@ -95,6 +101,7 @@ class ReplicaConnection implements Connection {
   async write(query: string, parameters: Array<Primitive>) {
     const client = await this.writerPool.connect();
     try {
+      this?.logger?.logQuery(query, parameters);
       const { rows } = await client.query(query, parameters);
       return rows;
     } catch (error) {
@@ -103,10 +110,6 @@ class ReplicaConnection implements Connection {
       client.release();
     }
   }
-}
-
-interface StudsLogger {
-  info(message: any): void;
 }
 
 interface StudsConfiguration extends ConnectionConfiguration {

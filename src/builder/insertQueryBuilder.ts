@@ -1,16 +1,10 @@
-import { table } from "console";
-import { ParameterManager } from "../common/ParameterManager";
-import {
-  escapeIdentifier,
-  escapeLiteral,
-  getConnection,
-} from "../connection/connection";
+import { getConnection } from "../connection/connection";
 import { EntityMetadata } from "../metadata/metadata";
 import { toArray } from "../utility/array";
-import { escapeAllIdentifiers, escapeColumns } from "../utility/encoding";
-import { returningColumnsToSQL, SelectColumn } from "../utility/select";
+import { escapeAllIdentifiers } from "../utility/encoding";
 import { Primitive } from "../utility/types";
 import { BaseQueryBuilder } from "./baseQueryBuilder";
+import { OnConflictQueryBuilder } from "./onConflictQueryBuilder";
 import { ReturningQueryBuilder } from "./returningQueryBuilder";
 import { SelectQueryBuilder } from "./selectQueryBuilder";
 
@@ -19,6 +13,7 @@ export class InsertQueryBuilder<T> extends BaseQueryBuilder<T> {
   private selectQueryBuilder!: SelectQueryBuilder<any>;
 
   private returningBuilder = new ReturningQueryBuilder();
+  private onConflictBuilder = new OnConflictQueryBuilder();
 
   constructor(alias: string, metadata: EntityMetadata) {
     super(alias, metadata);
@@ -59,11 +54,26 @@ export class InsertQueryBuilder<T> extends BaseQueryBuilder<T> {
     return this;
   }
 
+  upsertOn(constraintColumn: keyof T) {
+    this.onConflictBuilder.onConflictUpdate(
+      constraintColumn as string,
+      this.metadata.listPropertyColumns()
+    );
+    return this;
+  }
+
+  //TODO include this in the on conflict
+  onConflict(conflictClause: string) {
+    this.onConflictBuilder.setClause(conflictClause);
+    return this;
+  }
+
   toSQL(): [string, Array<Primitive>] {
     const schema = this.metadata.schemaName;
     const tableName = this.metadata.tableName;
 
     const returningQuery = this.addFactory(this.returningBuilder);
+    const onConflictQuery = this.addFactory(this.onConflictBuilder);
 
     if (this.selectQueryBuilder) {
       const [selectSQL, parameters] = this.selectQueryBuilder.toSQL();
@@ -75,6 +85,7 @@ export class InsertQueryBuilder<T> extends BaseQueryBuilder<T> {
     const insertRows = this.toInsertRows();
     const rawSQLString =
       `insert into ${schema}.${tableName} (${values}) values ${insertRows}` +
+      onConflictQuery +
       returningQuery;
     const SQLString = escapeAllIdentifiers(
       rawSQLString,
