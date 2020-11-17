@@ -676,6 +676,14 @@ describe("Select Builder Querying Test Database", () => {
       .execute();
   });
 
+  it("Should not allow SQL injection", async () => {
+    const ducks = await Ducks.createQueryBuilder()
+      .select("ducks")
+      .select("id")
+      .where({ name: "; pg_sleep(10000000)" })
+      .execute();
+  });
+
   it("Should create a select query ordering", async () => {
     await Ducks.createQueryBuilder()
       .select("ducks")

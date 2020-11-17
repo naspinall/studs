@@ -80,8 +80,8 @@ export const escapeAllIdentifiers = (
     .map((splitSQL, index) =>
       // Only escape on odd, queries won't start with a string literal
       index % 2 === 0
-      // Use regex to replace all the identifiers in SQL
-        ? identifiers.reduce(
+        ? // Use regex to replace all the identifiers in SQL
+          identifiers.reduce(
             (currentSQL: string, identifier: string) =>
               currentSQL.replace(
                 new RegExp(`("|\\b)(${identifier})("|\\b)`, "g"),
@@ -89,8 +89,8 @@ export const escapeAllIdentifiers = (
               ),
             splitSQL
           )
-        // Just returning string literal
-        : splitSQL
+        : // Just returning string literal
+          splitSQL
     )
     // Joining string back together
     .join("'");

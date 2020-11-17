@@ -1,5 +1,6 @@
 import { Client } from "pg";
 import { ParameterManager } from "../common/ParameterManager";
+import { escapeIdentifier, getConnection } from "../connection/connection";
 import { Entity } from "../entity";
 import { EntityMetadata, getMetadata } from "../metadata/metadata";
 import { OperatorConfiguration } from "../operators/Operator";
@@ -39,5 +40,9 @@ export class BaseQueryBuilder<T> {
       .toSQL();
     this.parameterManager.merge(factory.getParameterManager());
     return query;
+  }
+
+  protected escape(input : string) : string {
+    return escapeIdentifier(input)
   }
 }

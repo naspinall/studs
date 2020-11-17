@@ -93,6 +93,20 @@ describe("Connecting To With A Replicated Database Connection", () => {
     );
   });
 
+  it("Should recover from an error in a transaction", async () => {
+    // Performing a bad query
+    try {
+      await getConnection().writeTransaction(
+        `update ffarm.ducks set name = 'Diego' where id = 1`
+      );
+    } catch (error) {}
+
+    // Can now perform a good query
+    await getConnection().writeTransaction(
+      `update farm.ducks set name = 'Diego' where id = 1`
+    );
+  });
+
   afterAll(async () => {
     getConnection().disconnect();
   });

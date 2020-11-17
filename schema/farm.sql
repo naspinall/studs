@@ -1,13 +1,13 @@
 create schema farm;
 
 create table if not exists farm.house(
-    id serial unique,
+    id serial primary key,
     name text,
     colour text
 );
 
 create table if not exists farm.ducks(
-    id serial,
+    id serial primary key,
     name text,
     breed text,
     feather_type text,
@@ -15,7 +15,7 @@ create table if not exists farm.ducks(
 );
 
 create table if not exists farm.geese(
-    id serial,
+    id serial primary key,
     name text,
     breed text,
     feather_type text,

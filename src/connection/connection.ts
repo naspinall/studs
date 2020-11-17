@@ -91,6 +91,8 @@ class SingleConnection implements Connection {
       await client.query("COMMIT");
       return rows;
     } catch (error) {
+      // Rolling back on an error to prevent connection being blocked
+      await client.query("ROLLBACK");
       throw error;
     } finally {
       client.release();
@@ -152,6 +154,8 @@ class ReplicaConnection implements Connection {
       await client.query("COMMIT");
       return rows;
     } catch (error) {
+      // Rolling back on an error to prevent connection being blocked
+      await client.query("ROLLBACK");
       throw error;
     } finally {
       client.release();
