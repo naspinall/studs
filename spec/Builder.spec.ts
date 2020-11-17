@@ -376,6 +376,38 @@ describe("Relation Builder", () => {
       `select * from "farm"."ducks" as "ducks" right join "farm"."house" "house" on ( "ducks"."house_id" = "house"."id" )`
     );
   });
+
+  it("Should Build A With Query", () => {
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
+      .with(Ducks.createQueryBuilder().select("more_ducks"), "with_ducks")
+      .toSQL();
+
+    expect(query).toBe(`with "with_ducks" as ( select * from "farm"."ducks" as "more_ducks" ) select * from "farm"."ducks" as "ducks"`);
+  });
+
+  it("Should Build A With Query With Parameters", () => {
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
+      .with(Ducks.createQueryBuilder().select("more_ducks").where({name : "Mundungus Fletcher"}), "more_ducks")
+      .where({id : 1})
+      .toSQL();
+
+    expect(query).toBe(`with "more_ducks" as ( select * from "farm"."ducks" as "more_ducks" where "more_ducks"."name" = $1 ) select * from "farm"."ducks" as "ducks" where "ducks"."id" = $2`);
+  });
+
+  it("Should Build A With Query With Parameters Interacting Between The Two", () => {
+    const [query, parameters] = Ducks.createQueryBuilder()
+      .select("ducks")
+      .with(Ducks.createQueryBuilder().select("more_ducks").where({name : "Mundungus Fletcher"}), "more_ducks")
+      .where({id : 1})
+      .andWhere("more_ducks.name = ducks.name")
+      .toSQL();
+
+    expect(query).toBe(`with "more_ducks" as ( select * from "farm"."ducks" as "more_ducks" where "more_ducks"."name" = $1 ) select * from "farm"."ducks" as "ducks" where "ducks"."id" = $2 and "more_ducks"."name" = "ducks"."name"`);
+  });
+
+  
 });
 
 describe("Insert Builder", () => {

@@ -30,6 +30,10 @@ export class BaseQueryBuilder<T> {
     this.metadata = metadata;
   }
 
+  getParameterManager(): ParameterManager {
+    return this.parameterManager
+  }
+
   protected addFactory(factory: QueryFactory<T>): string {
     const [query] = factory
       .configure({

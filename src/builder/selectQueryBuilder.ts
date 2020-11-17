@@ -33,6 +33,8 @@ const IsOrderBy = (check: any): check is OrderByObject =>
 export class SelectQueryBuilder<T> extends BaseQueryBuilder<T> {
   private selectColumns: Array<SelectColumn> = [];
   private selectExpressions: Array<SelectExpression> = [];
+  private withQuery: string = "";
+  private aliases: Array<string> = [];
 
   private whereBuilder = new WhereQueryBuilder<T>();
   private havingBuilder = new HavingQueryBuilder();
@@ -229,6 +231,7 @@ export class SelectQueryBuilder<T> extends BaseQueryBuilder<T> {
     if (typeof values === "string") return this.andWhere(values, parameters);
     this.whereBuilder
       .configure({
+        count: this.parameterManager.getParameterCount(),
         alias: this.alias,
         metadata: this.metadata,
       })
@@ -244,6 +247,11 @@ export class SelectQueryBuilder<T> extends BaseQueryBuilder<T> {
     SQLString: string,
     parameterObject?: ParameterObject
   ): SelectQueryBuilder<T> {
+    this.whereBuilder.configure({
+      count: this.parameterManager.getParameterCount(),
+      alias: this.alias,
+      metadata: this.metadata,
+    });
     this.whereBuilder.andWhere(SQLString, parameterObject);
     return this;
   }
@@ -283,10 +291,12 @@ export class SelectQueryBuilder<T> extends BaseQueryBuilder<T> {
   }
 
   // Order matters for now.
-  with(subQuery: SelectQueryBuilder<T>) {
-    this.parameterManager.configure({ count: subQuery.getParamCount() });
-    const [] = subQuery.toSQL();
-    //this.whereStatements.push(`${alias} as ( ${subQuerySQL} )`);
+  with(subQuery: SelectQueryBuilder<T>, alias: string) {
+    const [query] = subQuery.toSQL();
+    this.parameterManager.merge(subQuery.getParameterManager());
+    this.withQuery = `with ${alias} as ( ${query} ) `;
+    this.aliases.push(alias, ...subQuery.getAliases());
+    return this;
   }
 
   private getAliases(): Array<string> {
@@ -294,6 +304,7 @@ export class SelectQueryBuilder<T> extends BaseQueryBuilder<T> {
       this.metadata.schemaName,
       this.metadata.tableName,
       this.alias,
+      ...this.aliases,
       ...this.metadata.listDatabaseColumns(),
       ...(this.selectExpressions
         .map(({ alias }) => alias)
@@ -318,6 +329,7 @@ export class SelectQueryBuilder<T> extends BaseQueryBuilder<T> {
     const columns = this.selectExpressionToSQL();
 
     const rawSQLString =
+      this.withQuery +
       `select ${columns} from ${schema}.${tableName} as ${this.alias}` +
       whereQuery +
       joinQuery +
